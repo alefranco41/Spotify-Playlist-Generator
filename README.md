@@ -2,7 +2,7 @@
 An automated method to generate highly personalized playlists
 
 Installation Instructions:
-1) Install the requirements listed in 'requirements.txt' (pip install requirements.txt)
+1) Install the requirements listed in 'requirements.txt' (pip install -r requirements.txt)
 2) Go to https://developer.spotify.com/dashboard and create an application
 3) Use the credentials of the application to set up the variables 'client_id', 'client_secret' and 'redirect_uri' in the file 'listening_history_manager.py'
 4) Run 'step1.py'
