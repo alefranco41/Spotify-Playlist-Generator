@@ -3,6 +3,7 @@ from spotipy.oauth2 import SpotifyOAuth
 import spotipy
 
 
+#Spotify application credentials
 client_id = 'b128c6e5f09d4109b196802bfa79b6e9'
 client_secret = '312b80d3a986451f8b873f9f4224b2e3'
 redirect_uri = 'https://www.google.com'
@@ -26,17 +27,16 @@ new_songs = [song for song in spotify.current_user_recently_played()['items'] if
 recently_played_songs['items'].extend(new_songs)
 
 
+with open("history.bin", "wb") as file:
+    pickle.dump(recently_played_songs, file)
+
 #order the listening history by decreasing playing timestamp
 recently_played_songs = sorted(recently_played_songs['items'], key=lambda x: x['played_at'], reverse=True)
 
-#remove duplicates from the listening history
-unique_songs = [recently_played_songs[0]]  
+#remove consecutive duplicates
+unique_songs = [recently_played_songs[0]] 
 for i in range(1, len(recently_played_songs)):
     if recently_played_songs[i]['track']['id'] != recently_played_songs[i - 1]['track']['id']:
         unique_songs.append(recently_played_songs[i])
 
-#store the listening history
 recently_played_songs = unique_songs
-with open("history.bin", "wb") as file:
-    pickle.dump(recently_played_songs, file)
-
