@@ -1,7 +1,7 @@
 import pickle
-from step1 import compute_listening_history
+from step1 import compute_listening_history, feature_names_to_remove
 from scipy.spatial.distance import euclidean
-
+from listening_history_manager import recently_played_songs, spotify
 
 song_sets_file_path = "most_similar_song_set.bin"
 listening_history_file_path = "listening_history.bin"
@@ -16,19 +16,6 @@ def retrieve_data():
         listening_history = pickle.load(file)
 
     return song_sets, listening_history
-
-def compute_history_pattern(listening_history, m):
-    history_pattern = []
-    k = 0
-    for period, tracks in listening_history.items():
-        for track in tracks:
-            history_pattern.append(track)
-            k += 1
-            if k == m:
-                return history_pattern
-            
-    return history_pattern
-
 
 def compute_optimal_solution(history_pattern, playlist_patterns, k):
     optimal_solutions = {}
@@ -78,9 +65,11 @@ def main():
     if song_sets and listening_history:
         playlist_patterns = compute_listening_history(song_sets) 
         m = min([len(tracks) for period,tracks in playlist_patterns.items()])
-        history_pattern = compute_history_pattern(listening_history, m)
-        
+        listening_history = [track_item['track']['id'] for track_item in recently_played_songs]
+        history_pattern_features = list(filter(None, spotify.audio_features(tracks=listening_history)))[0:m]
+        history_pattern = [{key:value for key,value in song.items() if key not in feature_names_to_remove} for song in history_pattern_features]
         optimal_solutions = compute_optimal_solution(history_pattern, playlist_patterns, len(history_pattern))
+        
         print(optimal_solutions)
     else:
         print("No song sets retrieved")
