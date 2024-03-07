@@ -17,13 +17,25 @@ def retrieve_data():
 
     return song_sets, listening_history
 
-def compute_optimal_solution(history_pattern, playlist_patterns, k):
+def compute_optimal_solution(history_patterns, playlist_patterns):
     optimal_solutions = {}
 
     for period, playlist in playlist_patterns.items():
+        m = len(playlist)
+
+        if not history_patterns[period]:
+            break
+        
+        k = len(history_patterns[period])
+
+        if  k > m:
+            history_pattern = history_patterns[period][0:m]
+            k = m
+        else:
+            history_pattern = history_patterns[period]
+
         M = []
         V = []
-        m = len(playlist)
 
         M_first_row = [euclidean([value for value in history_pattern[0].values() if not isinstance(value, str)], [value for value in playlist[j].values() if not isinstance(value, str)]) for j in range(m)]
         V_first_row = [j for j in range(m)]
@@ -64,12 +76,8 @@ def main():
 
     if song_sets and listening_history:
         playlist_patterns = compute_listening_history(song_sets) 
-        m = min([len(tracks) for period,tracks in playlist_patterns.items()])
-        listening_history = [track_item['track']['id'] for track_item in recently_played_songs]
-        history_pattern_features = list(filter(None, spotify.audio_features(tracks=listening_history)))[0:m]
-        history_pattern = [{key:value for key,value in song.items() if key not in feature_names_to_remove} for song in history_pattern_features]
-        optimal_solutions = compute_optimal_solution(history_pattern, playlist_patterns, len(history_pattern))
-        
+
+        optimal_solutions = compute_optimal_solution(listening_history, playlist_patterns)
         print(optimal_solutions)
     else:
         print("No song sets retrieved")
