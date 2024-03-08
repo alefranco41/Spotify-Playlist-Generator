@@ -129,7 +129,7 @@ def compute_listening_habits(periods):
 
 
 #for each period, return the most similar song set among the four generated
-def compute_most_similar_song_set(song_sets, periods, listening_habits_period): 
+def compute_most_similar_song_sets(song_sets, periods, listening_habits_period): 
     #dictionary that maps a period to a dictionary of listening habits (one for each song set of relative to that period)
     Ph = {}
     for period_song_set, songsets in  song_sets.items():
@@ -164,7 +164,7 @@ def compute_most_similar_song_set(song_sets, periods, listening_habits_period):
         euclidean_distances = []
         
         for algorithm_name, (ntna, ntka) in Ph_values.items():
-            euclidean_distance = np.sqrt((ntna - listening_habits_period[0])**2 + (ntka - listening_habits_period[1])**2)
+            euclidean_distance = np.sqrt((ntna - listening_habits_period[period_song_set][0])**2 + (ntka - listening_habits_period[period_song_set][1])**2)
             euclidean_distances.append((algorithm_name, euclidean_distance))
 
         most_similar[period_song_set] = min(euclidean_distances, key=lambda x: x[1])
@@ -467,15 +467,13 @@ def generate_clustering_song_sets(clusterings):
 
 
 def main():
+    #compute periods based on the playing timestamp of every song
     periods = compute_periods()
-
+    
     #use the Spotify API to retrieve the audio features of the tracks in the listening history
-
     #store the listening history (filtered by periods) in a dictionary
     listening_history = compute_listening_history(periods)
 
-
-    
     with open("listening_history.bin", "wb") as file:
             pickle.dump(listening_history, file)
 
@@ -484,32 +482,33 @@ def main():
 
     
     #in order to speed up the process (and avoid too much API requests) we only run the clusterings of the current period
-    current_period = 13 #int(datetime.now().hour)
+    current_period = 8 #int(datetime.now().hour)
+    periods_to_generate_song_sets = [current_period, 13]
 
-    #pair (NTNA,NTKA) of the current period
-    listening_habits_period = listening_habits.get(current_period, None)
+    #pair (NTNA,NTKA) of the selected periods
+    listening_habits_periods = {period:listening_habits.get(period, None) for period in periods_to_generate_song_sets}
 
-    #listening history of the current period
-    listening_history_filtered = {period:songs for period, songs in listening_history.items() if period == current_period}
-    
-    
 
-    if listening_habits_period:
-        #run the clusterings
-        clusterings = compute_clusterings(listening_history_filtered)
+    if listening_habits_periods and any(value is not None for value in listening_habits_periods.values()): 
+        #listening history of the selected periods
+        listening_history_filtered = {period:songs for period, songs in listening_history.items() if period in periods_to_generate_song_sets}
+        if listening_history_filtered and any(len(value) != 0 for value in listening_history_filtered.values()):
+            #run the clusterings
+            clusterings = compute_clusterings(listening_history_filtered)
 
-        
-        #generate the song sets
-        clustering_song_sets = generate_clustering_song_sets(clusterings)
+            #generate the song sets
+            clustering_song_sets = generate_clustering_song_sets(clusterings)
 
-        #among the song sets generated, choose the most similar to the pair (NTNA,NTKA)
-        most_similar_song_set = compute_most_similar_song_set(clustering_song_sets, periods, listening_habits_period)
+            #among the song sets generated, choose the most similar to the pair (NTNA,NTKA)
+            most_similar_song_sets = compute_most_similar_song_sets(clustering_song_sets, periods, listening_habits_periods)
 
-        #store the playlist
-        with open("most_similar_song_set.bin", "wb") as file:
-            pickle.dump(most_similar_song_set, file)
+            #store the playlist
+            with open("most_similar_song_set.bin", "wb") as file:
+                pickle.dump(most_similar_song_sets, file)
+        else:
+            print(f"No listening history detected for periods {periods_to_generate_song_sets}")
     else:
-        print(f"No habits detected for period {current_period}")
+        print(f"No habits detected for periods {periods_to_generate_song_sets}")
 
 if __name__ == "__main__":
     main()

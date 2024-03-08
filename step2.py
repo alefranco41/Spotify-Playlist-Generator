@@ -17,8 +17,8 @@ def retrieve_data():
 
     return song_sets, listening_history
 
-def compute_optimal_solution(history_patterns, playlist_patterns):
-    optimal_solutions = {}
+def compute_optimal_solution_indexes(history_patterns, playlist_patterns):
+    optimal_solutions_indexes = {}
 
     for period, playlist in playlist_patterns.items():
         m = len(playlist)
@@ -65,20 +65,28 @@ def compute_optimal_solution(history_patterns, playlist_patterns):
         for i in range(k-2, -1, -1):
             t = vertices_period[0]
             min_index = V[i+1][t]
-            vertices_period.insert(0, min_index)
+            if min_index not in vertices_period: #duplicate indexes ?
+                vertices_period.insert(0, min_index)
         
-        optimal_solutions[period] = vertices_period
-    return optimal_solutions
+        optimal_solutions_indexes[period] = vertices_period
+    return optimal_solutions_indexes
 
+
+def retrieve_optimal_solution_songs(optimal_solutions_indexes, playlist_patterns):
+    playlists = {}
+    for period, songs in playlist_patterns.items():
+        playlist = [songs[index]['id'] for index in optimal_solutions_indexes[period]]
+        playlists[period] = playlist
+    
+    return playlists
 
 def main():
     song_sets, listening_history = retrieve_data() 
 
     if song_sets and listening_history:
         playlist_patterns = compute_listening_history(song_sets) 
-
-        optimal_solutions = compute_optimal_solution(listening_history, playlist_patterns)
-        print(optimal_solutions)
+        optimal_solutions_indexes = compute_optimal_solution_indexes(listening_history, playlist_patterns)
+        final_playlists = retrieve_optimal_solution_songs(optimal_solutions_indexes, playlist_patterns)
     else:
         print("No song sets retrieved")
 if __name__ == '__main__':
