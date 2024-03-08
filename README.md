@@ -10,4 +10,4 @@ Installation Instructions:
 6) Run 'step2.py'
 7) If you reach the Spotify API requests limit, the application will not work. In this case, you can either:
   a) wait for about one day
-  b) delete the '.cache' file, provide different credentials and go back to step 2)
+  b) delete the '.cache' file and go back to step 2)
