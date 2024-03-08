@@ -1,11 +1,12 @@
 import pickle
-from step1 import compute_listening_history, feature_names_to_remove
+from step1 import compute_listening_history
 from scipy.spatial.distance import euclidean
-from listening_history_manager import recently_played_songs, spotify
+from listening_history_manager import spotify
 
 song_sets_file_path = "most_similar_song_set.bin"
 listening_history_file_path = "listening_history.bin"
 
+#retrieve the listening history and the song sets generated in the first step
 def retrieve_data():
     song_sets = None
     listening_history = None
@@ -17,6 +18,7 @@ def retrieve_data():
 
     return song_sets, listening_history
 
+#Dynamic programming algotithm that computes, for every playlist pattern, the best song ordering
 def compute_optimal_solution_indexes(history_patterns, playlist_patterns):
     optimal_solutions_indexes = {}
 
@@ -72,6 +74,7 @@ def compute_optimal_solution_indexes(history_patterns, playlist_patterns):
     return optimal_solutions_indexes
 
 
+#given the optimal song ordering indexes, retrieve, for every period, the actual song ids
 def retrieve_optimal_solution_songs(optimal_solutions_indexes, playlist_patterns):
     playlists = {}
     for period, songs in playlist_patterns.items():
@@ -80,6 +83,14 @@ def retrieve_optimal_solution_songs(optimal_solutions_indexes, playlist_patterns
     
     return playlists
 
+#upload the playlists generated for every period on Spotify
+def create_playlists(playlists):
+    for period, track_ids in playlists.items():
+        playlist = spotify.user_playlist_create(spotify.current_user()['id'], f"Period_{period}", public=False)
+        spotify.playlist_add_items(playlist['id'], track_ids)
+
+
+
 def main():
     song_sets, listening_history = retrieve_data() 
 
@@ -87,6 +98,7 @@ def main():
         playlist_patterns = compute_listening_history(song_sets) 
         optimal_solutions_indexes = compute_optimal_solution_indexes(listening_history, playlist_patterns)
         final_playlists = retrieve_optimal_solution_songs(optimal_solutions_indexes, playlist_patterns)
+        create_playlists(final_playlists)
     else:
         print("No song sets retrieved")
 if __name__ == '__main__':

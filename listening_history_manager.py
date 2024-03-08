@@ -9,7 +9,7 @@ client_secret = '05775486ab0747e99544078d539e57ce'
 redirect_uri = 'https://www.google.com'
 
 #interact with the spotify API
-spotify = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=client_id, client_secret=client_secret, redirect_uri=redirect_uri, scope="playlist-modify-public user-read-recently-played"))
+spotify = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=client_id, client_secret=client_secret, redirect_uri=redirect_uri, scope="playlist-modify-private user-read-recently-played"))
 
 #try to load the accumulated listening history (spotify API only allows to retrieve the last 50 songs of the listening history)
 try:
