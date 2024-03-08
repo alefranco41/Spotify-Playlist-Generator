@@ -1,4 +1,4 @@
-from listening_history_manager import spotify, recently_played_songs
+from listening_history_manager import spotify
 from step1 import feature_names_to_remove
 from step2 import compute_optimal_solution, retrieve_data
 import math
