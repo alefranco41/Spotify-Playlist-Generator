@@ -1,6 +1,6 @@
 from listening_history_manager import spotify
 from step1 import feature_names_to_remove
-from step2 import compute_optimal_solution, retrieve_data
+from step2 import compute_optimal_solution_indexes, retrieve_data, retrieve_optimal_solution_songs, create_playlists
 import math
 
 
@@ -20,6 +20,7 @@ def get_rec_1_recommendations(listening_history):
                 if playlist_length == len(playlist):
                     playlists[period] = playlist
                     break
+        playlists[period] = playlist
 
     return playlists
 
@@ -45,6 +46,7 @@ def get_rec_2_recommendations(listening_history):
                 if playlist_length == len(playlist):
                     playlists[period] = playlist
                     break
+        playlists[period] = playlist
 
     return playlists
 
@@ -89,19 +91,45 @@ def get_hyb_1_recommendations(listening_history):
         playlist_pattern = [{key:value for key,value in song.items() if key not in feature_names_to_remove} for song in playlist_pattern_all_features]
         playlist_patterns[period] = playlist_pattern
     
-    ordered_playlists = compute_optimal_solution(listening_history, playlist_patterns)
+    ordered_playlists_indexes = compute_optimal_solution_indexes(listening_history, playlist_patterns)
+    ordered_playlists = retrieve_optimal_solution_songs(ordered_playlists_indexes, playlist_patterns)
+
     return ordered_playlists
 
+def create_playlists_dict(playlists_rec_1, playlists_rec_2, playlists_hyb_1):
+    playlists = {}
+
+    for period, playlist in playlists_rec_1.items():
+        name = f"{period}_rec_1"
+        playlists[name] = playlist
+    
+    for period, playlist in playlists_rec_2.items():
+        name = f"{period}_rec_2"
+        playlists[name] = playlist
+
+    for period, playlist in playlists_hyb_1.items():
+        name = f"{period}_hyb_1"
+        playlists[name] = playlist
+    
+    return playlists
+
 def main():
-    current_period = 8 #int(datetime.now().hour)
-
     _, listening_history = retrieve_data() 
+    current_period = 8 #int(datetime.now().hour)
+    periods_to_generate_song_sets = [current_period, 13]
+    listening_history_filtered = {period:songs for period, songs in listening_history.items() if period in periods_to_generate_song_sets}
 
-    listening_history_filtered = {period:songs for period, songs in listening_history.items() if period == current_period}
+    if listening_history_filtered and any(len(value) != 0 for value in listening_history_filtered.values()):
+        playlists_rec_1 = get_rec_1_recommendations(listening_history_filtered)
+        playlists_rec_2 = get_rec_2_recommendations(listening_history_filtered)
+        playlists_hyb_1 = get_hyb_1_recommendations(listening_history_filtered)
 
-    playlist_rec_1 = get_rec_1_recommendations(listening_history_filtered)
-    playlist_rec_2 = get_rec_2_recommendations(listening_history_filtered)
-    playlist_hyb_1 = get_hyb_1_recommendations(listening_history_filtered)
+        playlists = create_playlists_dict(playlists_rec_1, playlists_rec_2, playlists_hyb_1)
 
+        create_playlists(playlists)
+    else:
+        print(f"No listening history detected for periods {periods_to_generate_song_sets}")
+
+    
 if __name__ == "__main__":
     main()

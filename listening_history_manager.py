@@ -4,8 +4,8 @@ import spotipy
 
 
 #Spotify application credentials
-client_id = '73962f02bb8e47ceb4f7542c7c6ce258'
-client_secret = '05775486ab0747e99544078d539e57ce'
+client_id = 'cc9aee3db2d042779ddbef0fb5361476'
+client_secret = 'b7cd917ecb5b4c5b9d290dad4ff4b4d3'
 redirect_uri = 'https://www.google.com'
 
 #interact with the spotify API
