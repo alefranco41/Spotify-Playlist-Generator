@@ -4,8 +4,8 @@ import spotipy
 
 
 #Spotify application credentials
-client_id = 'cc9aee3db2d042779ddbef0fb5361476'
-client_secret = 'b7cd917ecb5b4c5b9d290dad4ff4b4d3'
+client_id = '20e93cf42c624e6f863e1a55230fee16'
+client_secret = 'b6df3671c90c4fbbbb8a103aa666ef2d'
 redirect_uri = 'https://www.google.com'
 
 #interact with the spotify API
@@ -13,7 +13,7 @@ spotify = spotipy.Spotify(auth_manager=SpotifyOAuth(client_id=client_id, client_
 
 #try to load the accumulated listening history (spotify API only allows to retrieve the last 50 songs of the listening history)
 try:
-    with open("history.bin", "rb") as file:
+    with open("recently_played_songs.bin", "rb") as file:
         recently_played_songs = pickle.load(file)
 except FileNotFoundError:
     recently_played_songs = {'items': []}
@@ -27,7 +27,7 @@ new_songs = [song for song in spotify.current_user_recently_played()['items'] if
 recently_played_songs['items'].extend(new_songs)
 
 
-with open("history.bin", "wb") as file:
+with open("recently_played_songs.bin", "wb") as file:
     pickle.dump(recently_played_songs, file)
 
 #order the listening history by decreasing playing timestamp

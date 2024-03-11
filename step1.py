@@ -162,7 +162,6 @@ def compute_most_similar_song_sets(song_sets, periods, listening_habits_period):
     #use the euclidean distance in order to pick, for each period, the generated song set that is most similar to the user listening habits
     for period_song_set, Ph_values in Ph.items():
         euclidean_distances = []
-        
         for algorithm_name, (ntna, ntka) in Ph_values.items():
             euclidean_distance = np.sqrt((ntna - listening_habits_period[period_song_set][0])**2 + (ntka - listening_habits_period[period_song_set][1])**2)
             euclidean_distances.append((algorithm_name, euclidean_distance))
@@ -309,14 +308,17 @@ def compute_clusterings(periods_listening_history):
         clustering_kmeans = None
         clustering_fpf = None
         #for each algorithm, the best solution is stored as a triple (clusters, centroids, n_clusters)
-        if best_davies_bouldin_index_kmeans != float('inf'):
+        if best_davies_bouldin_index_kmeans != float('inf') and best_davies_bouldin_index_fpf != float('inf'):
             clustering_kmeans = (best_solution_kmeans, best_centroids_kmeans, n_labels_kmeans)
-    
-        if best_davies_bouldin_index_fpf != float('inf'):
             clustering_fpf = (best_solution_fpf, best_centroids_fpf, n_labels_fpf)
+            clusterings[period] = (clustering_kmeans,clustering_fpf)
+            print(f"Generated clusterings for period {period}")
+        else:
+            print(f"Couldn't generate clusterings for period {period}")
+            
         
         #for each algorithm, retain the solution that minimizes the davies bouldin index
-        clusterings[period] = (clustering_kmeans,clustering_fpf)
+        
     return clusterings
 
 
@@ -346,7 +348,6 @@ def linear_heuristic(cluster, centroid, m, song_set):
             #Get recommendations from Spotify API based on seed track and target features
             #if we set limit to be greater than playlist_length, we ensure that our playlist doesn't have any duplicate songs
             recommendations = spotify.recommendations(seed_tracks=[point[1]['id']], limit=50, kwargs=modified_song_data).get('tracks')
-            
             #Append recommended tracks to the list
             count = 0
             for track in recommendations:
@@ -434,7 +435,9 @@ def generate_clustering_song_sets(clusterings):
                 if n >= 4:
                     m = playlist_length / (len(K[0]) * 4)
                     k_means_linear_heuristic_song_set.extend(linear_heuristic(cluster, K[1][i], m, k_means_linear_heuristic_song_set))
+                    print(f"Generated song set with linear heuristic for period {period} and K-Means cluster #{i}")
                     k_means_spheric_heuristic_song_set.extend(spheric_heuristic(cluster, K[1][i], m, k_means_spheric_heuristic_song_set))
+                    print(f"Generated song set with spheric heuristic for period {period} and K-Means cluster #{i}")
                 else:
                     enough_cluster_points = False
                     break
@@ -444,7 +447,9 @@ def generate_clustering_song_sets(clusterings):
                 if n >= 4:
                     m = playlist_length / (len(F[0]) * 4)
                     first_point_first_linear_heuristic_song_set.extend(linear_heuristic(cluster, F[1][i], m, first_point_first_linear_heuristic_song_set))
+                    print(f"Generated song set with spheric heuristic for period {period} and FPF cluster #{i}")
                     first_point_first_spheric_heuristic_song_set.extend(spheric_heuristic(cluster, F[1][i], m, first_point_first_linear_heuristic_song_set))
+                    print(f"Generated song set with spheric heuristic for period {period} and FPF cluster #{i}")
                 else:
                     enough_cluster_points = False
                     break
@@ -462,6 +467,10 @@ def generate_clustering_song_sets(clusterings):
             
                 #store the song_sets 
                 song_sets[period] = clustering_song_sets
+            else:
+                print(f"Not enough cluster points for period {period}")
+    
+    
     return song_sets
             
 
@@ -473,21 +482,21 @@ def main():
     #use the Spotify API to retrieve the audio features of the tracks in the listening history
     #store the listening history (filtered by periods) in a dictionary
     listening_history = compute_listening_history(periods)
+    print("Retrieved listening history ")
 
     with open("listening_history.bin", "wb") as file:
             pickle.dump(listening_history, file)
 
     #compute the listening habits
     listening_habits = compute_listening_habits(periods)
-
+    print("Computed listening habits ")
     
     #in order to speed up the process (and avoid too much API requests) we only run the clusterings of the current period
-    current_period = 8 #int(datetime.now().hour)
-    periods_to_generate_song_sets = [current_period, 13]
+    current_period = int(datetime.now().hour)
+    periods_to_generate_song_sets = [current_period]
 
     #pair (NTNA,NTKA) of the selected periods
     listening_habits_periods = {period:listening_habits.get(period, None) for period in periods_to_generate_song_sets}
-
 
     if listening_habits_periods and any(value is not None for value in listening_habits_periods.values()): 
         #listening history of the selected periods
@@ -495,16 +504,22 @@ def main():
         if listening_history_filtered and any(len(value) != 0 for value in listening_history_filtered.values()):
             #run the clusterings
             clusterings = compute_clusterings(listening_history_filtered)
-
             #generate the song sets
             clustering_song_sets = generate_clustering_song_sets(clusterings)
-
             #among the song sets generated, choose the most similar to the pair (NTNA,NTKA)
+            
             most_similar_song_sets = compute_most_similar_song_sets(clustering_song_sets, periods, listening_habits_periods)
 
-            #store the playlist
-            with open("most_similar_song_set.bin", "wb") as file:
-                pickle.dump(most_similar_song_sets, file)
+            if most_similar_song_sets:
+                #store the playlist
+                for period, song_set in most_similar_song_sets.items():
+                    print(f"Best song set for period {period}:")
+                    for song in song_set:
+                        print(song['name'])
+                    print("\n")
+                with open("most_similar_song_set.bin", "wb") as file:
+                    pickle.dump(most_similar_song_sets, file)
+                    print("Song sets uploaded")
         else:
             print(f"No listening history detected for periods {periods_to_generate_song_sets}")
     else:
