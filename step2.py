@@ -16,6 +16,7 @@ def retrieve_data():
     with open(listening_history_file_path, "rb") as file:
         listening_history = pickle.load(file)
 
+    print("Retrieved the listening history and the song sets generated from the previous step")
     return song_sets, listening_history
 
 #Dynamic programming algotithm that computes, for every playlist pattern, the best song ordering
@@ -77,10 +78,12 @@ def compute_optimal_solution_indexes(history_patterns, playlist_patterns):
 #given the optimal song ordering indexes, retrieve, for every period, the actual song ids
 def retrieve_optimal_solution_songs(optimal_solutions_indexes, playlist_patterns):
     playlists = {}
+    
     for period, songs in playlist_patterns.items():
         playlist = [songs[index]['id'] for index in optimal_solutions_indexes[period]]
+        print(f"Optimal song ordering for period {period}: {playlist}")
         playlists[period] = playlist
-    
+
     return playlists
 
 #upload the playlists generated for every period on Spotify
@@ -88,6 +91,7 @@ def create_playlists(playlists):
     for period, track_ids in playlists.items():
         playlist = spotify.user_playlist_create(spotify.current_user()['id'], f"Period_{period}", public=False)
         spotify.playlist_add_items(playlist['id'], track_ids)
+        print(f"Uploaded on Spotify the optimal playlist for period {period}")
 
 
 

@@ -116,7 +116,7 @@ def create_playlists_dict(playlists_rec_1, playlists_rec_2, playlists_hyb_1):
 def main():
     _, listening_history = retrieve_data() 
     current_period = 8 #int(datetime.now().hour)
-    periods_to_generate_song_sets = [current_period, 13]
+    periods_to_generate_song_sets = [15]
     listening_history_filtered = {period:songs for period, songs in listening_history.items() if period in periods_to_generate_song_sets}
 
     if listening_history_filtered and any(len(value) != 0 for value in listening_history_filtered.values()):
