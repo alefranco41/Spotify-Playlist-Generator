@@ -1,8 +1,7 @@
 import pickle
 from spotipy.oauth2 import SpotifyOAuth
 import spotipy
-
-
+from datetime import datetime
 #Spotify application credentials
 client_id = '20e93cf42c624e6f863e1a55230fee16'
 client_secret = 'b6df3671c90c4fbbbb8a103aa666ef2d'
@@ -33,10 +32,22 @@ with open("recently_played_songs.bin", "wb") as file:
 #order the listening history by decreasing playing timestamp
 recently_played_songs = sorted(recently_played_songs['items'], key=lambda x: x['played_at'], reverse=True)
 
-#remove consecutive duplicates
+#remove consecutive duplicates and songs that have been played for too little time
 unique_songs = [recently_played_songs[0]] 
 for i in range(1, len(recently_played_songs)):
-    if recently_played_songs[i]['track']['id'] != recently_played_songs[i - 1]['track']['id']:
-        unique_songs.append(recently_played_songs[i])
+    current_song = recently_played_songs[i]
+    previous_song = recently_played_songs[i - 1]
+
+    #Compute the difference of the two timestamps
+    current_time = current_song['played_at']
+    previous_time = previous_song['played_at']
+    time_difference = (datetime.strptime(previous_time, '%Y-%m-%dT%H:%M:%S.%fZ') - datetime.strptime(current_time, '%Y-%m-%dT%H:%M:%S.%fZ')).total_seconds()
+
+    print(time_difference, previous_song['track']['name'])
+
+    #We only keep different consecutive songs and songs that have been played for at least 30 seconds
+    if current_song['track']['id'] != previous_song['track']['id'] and time_difference >= 30:
+        unique_songs.append(current_song)
 
 recently_played_songs = unique_songs
+
