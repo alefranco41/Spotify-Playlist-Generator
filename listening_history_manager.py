@@ -43,8 +43,6 @@ for i in range(1, len(recently_played_songs)):
     previous_time = previous_song['played_at']
     time_difference = (datetime.strptime(previous_time, '%Y-%m-%dT%H:%M:%S.%fZ') - datetime.strptime(current_time, '%Y-%m-%dT%H:%M:%S.%fZ')).total_seconds()
 
-    print(time_difference, previous_song['track']['name'])
-
     #We only keep different consecutive songs and songs that have been played for at least 30 seconds
     if current_song['track']['id'] != previous_song['track']['id'] and time_difference >= 30:
         unique_songs.append(current_song)
