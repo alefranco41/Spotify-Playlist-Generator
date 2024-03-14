@@ -447,7 +447,7 @@ def generate_clustering_song_sets(clusterings):
                 if n >= 4:
                     m = playlist_length / (len(F[0]) * 4)
                     first_point_first_linear_heuristic_song_set.extend(linear_heuristic(cluster, F[1][i], m, first_point_first_linear_heuristic_song_set))
-                    print(f"Generated song set with spheric heuristic for period {period} and FPF cluster #{i}")
+                    print(f"Generated song set with linear heuristic for period {period} and FPF cluster #{i}")
                     first_point_first_spheric_heuristic_song_set.extend(spheric_heuristic(cluster, F[1][i], m, first_point_first_linear_heuristic_song_set))
                     print(f"Generated song set with spheric heuristic for period {period} and FPF cluster #{i}")
                 else:
