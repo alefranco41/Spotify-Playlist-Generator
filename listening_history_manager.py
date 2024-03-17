@@ -39,9 +39,10 @@ for i in range(1, len(recently_played_songs)):
     previous_song = recently_played_songs[i - 1]
 
     #Compute the difference of the two timestamps
-    current_time = current_song['played_at']
-    previous_time = previous_song['played_at']
-    time_difference = (datetime.strptime(previous_time, '%Y-%m-%dT%H:%M:%S.%fZ') - datetime.strptime(current_time, '%Y-%m-%dT%H:%M:%S.%fZ')).total_seconds()
+    current_time = datetime.fromisoformat(current_song['played_at'].rstrip('Z'))
+    previous_time = datetime.fromisoformat(previous_song['played_at'].rstrip('Z'))
+
+    time_difference = (previous_time - current_time).total_seconds()
 
     #We only keep different consecutive songs and songs that have been played for at least 30 seconds
     if current_song['track']['id'] != previous_song['track']['id'] and time_difference >= 30:

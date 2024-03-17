@@ -64,8 +64,6 @@ def compute_periods():
     periods = {}
     
     for track_item in recently_played_songs:
-        track_id = track_item['track']['id']
-
         #a period is identified by the day and the hour in which some tracks in the listening history have been played
         timestamp = datetime.strptime(track_item['played_at'], "%Y-%m-%dT%H:%M:%S.%fZ").replace(minute=0, second=0, microsecond=0)
 
