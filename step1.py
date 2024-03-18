@@ -424,7 +424,7 @@ def generate_clustering_song_sets(clusterings):
             for i, cluster in enumerate(K[0]):
                 n = len(cluster)
                 if n >= 4:
-                    m = playlist_length / (len(K[0]) * 4)
+                    m = playlist_length / (K[2] * 4)
                     k_means_linear_heuristic_song_set.extend(linear_heuristic(cluster, K[1][i], m, k_means_linear_heuristic_song_set))
                     print(f"Generated song set with linear heuristic for period {period} and K-Means cluster #{i}")
                     k_means_spheric_heuristic_song_set.extend(spheric_heuristic(cluster, K[1][i], m, k_means_spheric_heuristic_song_set))
@@ -436,7 +436,7 @@ def generate_clustering_song_sets(clusterings):
             for i, cluster in enumerate(F[0]):
                 n = len(cluster)
                 if n >= 4:
-                    m = playlist_length / (len(F[0]) * 4)
+                    m = playlist_length / (F[2] * 4)
                     first_point_first_linear_heuristic_song_set.extend(linear_heuristic(cluster, F[1][i], m, first_point_first_linear_heuristic_song_set))
                     print(f"Generated song set with linear heuristic for period {period} and FPF cluster #{i}")
                     first_point_first_spheric_heuristic_song_set.extend(spheric_heuristic(cluster, F[1][i], m, first_point_first_linear_heuristic_song_set))
