@@ -84,25 +84,23 @@ def compute_periods():
 
 #dictionary that maps a period (hour) to a list of features dictionaries, one for every track in that period
 def compute_listening_history(periods):
-    #we use the 'periods' dictionary computed before in order to filter the listening history
-    periods_listening_history = {}
+    history = {}
     for hour in hours:
-        periods_listening_history[hour] = []
+        history[hour] = []
         for period, tracks in periods.items():
-            if (isinstance(period, datetime) and period.hour == hour) or (not isinstance(period, datetime) and period == hour):
-                features = spotify.audio_features(tracks=[track['id'] for track in tracks])
+            if period.hour == hour:
+                tracks = [track['id'] for track in tracks]
+                features = spotify.audio_features(tracks=tracks)
                 for feature in features:
                     if feature:
-                        trackID_features = feature.get('id', None)
-                        if trackID_features and trackID_features not in periods_listening_history[hour]:
-                            filtered_features = {feature_name:feature_value for feature_name,feature_value in feature.items() if feature_name not in feature_names_to_remove}
-                            periods_listening_history[hour].append(filtered_features)
+                        track_features = feature.get('id', None)
+                        if track_features and track_features not in history[hour]:
+                            final_features = dict(filter(lambda item: item[0] not in feature_names_to_remove, feature.items()))
+                            history[hour].append(final_features)
 
-        if periods_listening_history[hour] == []:
-            del periods_listening_history[hour]
-
-    #we return the listening history filtered by periods
-    return periods_listening_history
+        if history[hour] == []:
+            del history[hour]
+    return history
 
 #pair (NTNA, NTKA) representing the user listening habits for every period in the listening history
 #dictionary that maps every period hour present in the listening history to the relative pair (NTNA,NTKA)
