@@ -85,21 +85,19 @@ def compute_periods():
 #dictionary that maps a period (hour) to a list of features dictionaries, one for every track in that period
 def compute_listening_history(periods):
     history = {}
-    for hour in hours:
-        history[hour] = []
-        for period, tracks in periods.items():
-            if period.hour == hour:
-                tracks = [track['id'] for track in tracks]
-                features = spotify.audio_features(tracks=tracks)
-                for feature in features:
-                    if feature:
-                        track_features = feature.get('id', None)
-                        if track_features and track_features not in history[hour]:
-                            final_features = dict(filter(lambda item: item[0] not in feature_names_to_remove, feature.items()))
-                            history[hour].append(final_features)
+    for period, tracks in periods.items():
+        hour = period.hour
+        if not history.get(period,None):
+            history[hour] = []
+        tracks = [track['id'] for track in tracks]
+        features = spotify.audio_features(tracks=tracks)
+        for feature in features:
+            if feature:
+                track_features = feature.get('id', None)
+                if track_features:
+                    final_features = dict(filter(lambda item: item[0] not in feature_names_to_remove, feature.items()))
+                    history[hour].append(final_features)
 
-        if history[hour] == []:
-            del history[hour]
     return history
 
 #pair (NTNA, NTKA) representing the user listening habits for every period in the listening history
