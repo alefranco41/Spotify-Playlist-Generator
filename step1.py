@@ -13,7 +13,7 @@ feature_names_to_remove = ["uri", "track_href", "analysis_url", "type", "duratio
 playlist_length = 48
 
 days = set()
-hours = [i for i in range(1,25)]
+hours = [i for i in range(0,24)]
 period_hours = set()
 
 #Spotify API feature intervals
@@ -34,14 +34,13 @@ constraints = {
 
 #NTNA: number of new tracks by new artists played during day 'day', during the period 'hour'
 #NTKA: number of new tracks by known artists played during day 'day', during the period 'hour'
-def compute_NTNA_NTKA(day, hour, periods):
-    current_period = datetime(day.year, day.month, day.day, hour)
-    songs = periods.get(current_period)
+def compute_NTNA_NTKA(current_period, periods):
+    current_period_songs = periods.get(current_period)
     new_song = True
     new_artist = True
     ntna = 0
     ntka = 0
-    for song in songs:
+    for song in current_period_songs:
         for period, tracks in periods.items():
             if period < current_period:
                 for track in tracks:
@@ -50,7 +49,6 @@ def compute_NTNA_NTKA(day, hour, periods):
                     
                     if track['artists'][0]['id'] == song['artists'][0]['id']:
                         new_artist = False
-
         if new_song and new_artist:
             ntna += 1
         if new_song and not new_artist:
@@ -89,8 +87,8 @@ def compute_listening_history(periods):
         hour = period.hour
         if not history.get(hour,None):
             history[hour] = []
-        tracks = [track['id'] for track in tracks]
-        features = spotify.audio_features(tracks=tracks)
+        track_ids = [track['id'] for track in tracks]
+        features = spotify.audio_features(tracks=track_ids)
         for feature in features:
             if feature:
                 track_features = feature.get('id', None)
@@ -109,10 +107,10 @@ def compute_listening_habits(periods):
         ntka = 0
         h = 0
         for day in days:
-            period = datetime(day.year, day.month, day.day, hour)
-            if periods.get(period, None):
-                h += len(periods.get(period))
-                period_ntna, period_ntka = compute_NTNA_NTKA(day, hour, periods)
+            current_period = datetime(day.year, day.month, day.day, hour)
+            if periods.get(current_period, None):
+                h += len(periods.get(current_period))
+                period_ntna, period_ntka = compute_NTNA_NTKA(current_period, periods)
                 ntna += period_ntna
                 ntka += period_ntka
                 
