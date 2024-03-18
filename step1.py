@@ -87,7 +87,7 @@ def compute_listening_history(periods):
     history = {}
     for period, tracks in periods.items():
         hour = period.hour
-        if not history.get(period,None):
+        if not history.get(hour,None):
             history[hour] = []
         tracks = [track['id'] for track in tracks]
         features = spotify.audio_features(tracks=tracks)
