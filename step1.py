@@ -34,12 +34,12 @@ constraints = {
 
 #NTNA: number of new tracks by new artists played during day 'day', during the period 'hour'
 #NTKA: number of new tracks by known artists played during day 'day', during the period 'hour'
-def compute_NTNA_NTKA(current_period, periods):
+def compute_dNTNA_dNTKA(current_period, periods):
     current_period_songs = periods.get(current_period)
     new_song = True
     new_artist = True
-    ntna = 0
-    ntka = 0
+    period_dNTNA = 0
+    period_dNTKA = 0
     for song in current_period_songs:
         for period, tracks in periods.items():
             if period < current_period:
@@ -50,11 +50,11 @@ def compute_NTNA_NTKA(current_period, periods):
                     if track['artists'][0]['id'] == song['artists'][0]['id']:
                         new_artist = False
         if new_song and new_artist:
-            ntna += 1
+            period_dNTNA += 1
         if new_song and not new_artist:
-            ntka += 1
+            period_dNTKA += 1
 
-    return ntna,ntka
+    return period_dNTNA,period_dNTKA
 
 
 #dictionary that maps a period (datetime) to the list of tracks played in that period
@@ -103,20 +103,19 @@ def compute_listening_history(periods):
 def compute_listening_habits(periods): 
     Ph = {}
     for hour in period_hours:
-        ntna = 0
-        ntka = 0
+        dNTNA = 0
+        dNTKA = 0
         h = 0
         for day in days:
             current_period = datetime(day.year, day.month, day.day, hour)
             if periods.get(current_period, None):
                 h += len(periods.get(current_period))
-                period_ntna, period_ntka = compute_NTNA_NTKA(current_period, periods)
-                ntna += period_ntna
-                ntka += period_ntka
-                
-        ntna = 100 * ntna / h
-        ntka = 100 * ntka / h
-        Ph[hour] = (ntna,ntka)
+                period_dNTNA, period_dNTKA = compute_dNTNA_dNTKA(current_period, periods)
+                dNTNA += period_dNTNA
+                dNTKA += period_dNTKA 
+        NTNA = 100 * dNTNA / h
+        NTKA = 100 * dNTKA / h
+        Ph[hour] = (NTNA,NTKA)
     return Ph
 
 
