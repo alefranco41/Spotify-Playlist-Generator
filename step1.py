@@ -264,52 +264,29 @@ def furthest_point_first(features_vector, n_clusters, min_size=4):
 #dictionary that maps a period (datetime) to a pair (K,F) of clusterings
 def compute_clusterings(periods_listening_history):
     clusterings = {}
-    for period, features_vector in periods_listening_history.items():
-        #initialize the parameters for the k-means clustering algorithm
-        best_solution_kmeans = None
-        best_davies_bouldin_index_kmeans = float('inf')
-        n_labels_kmeans = float('inf')
+    for period, features in periods_listening_history.items():
+        clusterings[period] = {}
+        for method in ['kmeans', 'fpf']:
+            best_solution = None
+            best_davies_bouldin_index = float('inf')
+            n_clusters = float('inf')
 
-        #initialize the parameters for the furthest point first clustering algorithm
-        best_solution_fpf = None
-        best_davies_bouldin_index_fpf = float('inf')
-        n_labels_fpf = float('inf')
+            for k in range(2, math.floor(math.sqrt(len(features))) + 1):
+                try:
+                    labels, centroids, davies_bouldin_index = kmeans(features, k) if method == 'kmeans' else furthest_point_first(features, k)
+                    if davies_bouldin_index < best_davies_bouldin_index:
+                        best_solution = labels
+                        best_centroids = centroids
+                        best_davies_bouldin_index = davies_bouldin_index
+                        n_clusters = k
+                except ValueError:
+                    continue
 
-        #perform the two clustering algorithms for increasing number of clusters
-        for k in range(2, math.floor(math.sqrt(len(features_vector))) + 1):
-            try:
-                labels_kmeans, centroids_kmeans, davies_bouldin_index_kmeans = kmeans(features_vector, k)
-                if davies_bouldin_index_kmeans < best_davies_bouldin_index_kmeans:
-                    best_solution_kmeans = labels_kmeans
-                    best_centroids_kmeans = centroids_kmeans
-                    best_davies_bouldin_index_kmeans = davies_bouldin_index_kmeans
-                    n_labels_kmeans = k
-
-
-                labels_fpf, centroids_fpf, davies_bouldin_index_fpf = furthest_point_first(features_vector, k)
-                if davies_bouldin_index_fpf < best_davies_bouldin_index_fpf:
-                    best_solution_fpf = labels_fpf
-                    best_centroids_fpf = centroids_fpf
-                    best_davies_bouldin_index_fpf = davies_bouldin_index_fpf
-                    n_labels_fpf = k
-            except ValueError:
-                #not enough samples in order to produce at least 4 points for each cluster
-                continue
-
-        clustering_kmeans = None
-        clustering_fpf = None
-        #for each algorithm, the best solution is stored as a triple (clusters, centroids, n_clusters)
-        if best_davies_bouldin_index_kmeans != float('inf') and best_davies_bouldin_index_fpf != float('inf'):
-            clustering_kmeans = (best_solution_kmeans, best_centroids_kmeans, n_labels_kmeans)
-            clustering_fpf = (best_solution_fpf, best_centroids_fpf, n_labels_fpf)
-            clusterings[period] = (clustering_kmeans,clustering_fpf)
-            print(f"Generated clusterings for period {period}")
-        else:
-            print(f"Couldn't generate clusterings for period {period}")
-            
-        
-        #for each algorithm, retain the solution that minimizes the davies bouldin index
-        
+            if best_davies_bouldin_index != float('inf'):
+                clusterings[period][method] = (best_solution, best_centroids, n_clusters)
+                print(f"Generated {method} clustering for period {period}")
+            else:
+                print(f"Couldn't generate {method} clustering for period {period}")
     return clusterings
 
 
@@ -410,9 +387,9 @@ def generate_clustering_song_sets(clusterings):
     song_sets = {}
     for period, clustering in clusterings.items():
         enough_cluster_points = True
-        if clustering[0] and clustering[1]:
-            K = clustering[0] #k-means clustering
-            F = clustering[1] #fpf clustering
+        if clustering['kmeans'] and clustering['fpf']:
+            K = clustering['kmeans'] #k-means clustering
+            F = clustering['fpf'] #fpf clustering
 
             k_means_linear_heuristic_song_set = []
             k_means_spheric_heuristic_song_set = []
@@ -484,7 +461,7 @@ def main():
     
     #in order to speed up the process (and avoid too much API requests) we only run the clusterings of the current period
     current_period = int(datetime.now().hour)
-    periods_to_generate_song_sets = [13]
+    periods_to_generate_song_sets = [current_period]
 
     #pair (NTNA,NTKA) of the selected periods
     listening_habits_periods = {period:listening_habits.get(period, None) for period in periods_to_generate_song_sets}
