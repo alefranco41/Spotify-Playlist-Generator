@@ -487,7 +487,7 @@ def main():
     
     #in order to speed up the process (and avoid too much API requests) we only run the clusterings of the current period
     current_period = int(datetime.now().hour)
-    periods_to_generate_song_sets = [current_period]
+    periods_to_generate_song_sets = [13]
 
     #pair (NTNA,NTKA) of the selected periods
     listening_habits_periods = {period:listening_habits.get(period, None) for period in periods_to_generate_song_sets}
