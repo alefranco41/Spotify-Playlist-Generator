@@ -120,7 +120,7 @@ def compute_listening_habits(periods):
 
 
 #for each period, return the most similar song set among the four generated
-def compute_most_similar_song_sets(song_sets, periods, listening_habits_period): 
+def compute_most_similar_song_sets(song_sets, periods, listening_habits): 
     #dictionary that maps a period to a dictionary of listening habits (one for each song set of relative to that period)
     Ph = {}
     for period_song_set, songsets in  song_sets.items():
@@ -154,7 +154,7 @@ def compute_most_similar_song_sets(song_sets, periods, listening_habits_period):
     for period_song_set, Ph_values in Ph.items():
         euclidean_distances = []
         for algorithm_name, (ntna, ntka) in Ph_values.items():
-            euclidean_distance = np.sqrt((ntna - listening_habits_period[period_song_set][0])**2 + (ntka - listening_habits_period[period_song_set][1])**2)
+            euclidean_distance = np.sqrt((ntna - listening_habits[period_song_set][0])**2 + (ntka - listening_habits[period_song_set][1])**2)
             euclidean_distances.append((algorithm_name, euclidean_distance))
 
         most_similar[period_song_set] = min(euclidean_distances, key=lambda x: x[1])
@@ -315,7 +315,8 @@ def linear_heuristic(cluster, centroid, m, song_set):
             
             #Get recommendations from Spotify API based on seed track and target features
             #if we set limit to be greater than playlist_length, we ensure that our playlist doesn't have any duplicate songs
-            recommendations = spotify.recommendations(seed_tracks=[point[1]['id']], limit=50, kwargs=modified_song_data).get('tracks')
+            tracks = [point[1]['id']]
+            recommendations = spotify.recommendations(seed_tracks=tracks, limit=50, kwargs=modified_song_data).get('tracks')
             #Append recommended tracks to the list
             count = 0
             for track in recommendations:
@@ -362,7 +363,7 @@ def spheric_heuristic(cluster, centroid, m, song_set):
                 nearest_song = song
         
         #Modify song data to include target features
-        modified_song_data = {'target_' + key: value for key, value in song.items() if key != 'id'}
+        modified_song_data = {'target_' + key: value for key, value in nearest_song.items() if key != 'id'}
         
         #Get recommendations from Spotify API based on the nearest song and target features
         #if we set limit to be greater than playlist_length, we ensure that our playlist doesn't have any duplicate songs
