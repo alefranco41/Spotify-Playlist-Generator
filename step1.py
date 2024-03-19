@@ -384,63 +384,34 @@ def spheric_heuristic(cluster, centroid, m, song_set):
 
 #use the two heuristics to generate, for each period, four different song sets 
 def generate_clustering_song_sets(clusterings):
-    #dictionary that maps a period to a dictionary of the generated song sets
     song_sets = {}
     for period, clustering in clusterings.items():
         enough_cluster_points = True
         if clustering['kmeans'] and clustering['fpf']:
-            K = clustering['kmeans'] #k-means clustering
-            F = clustering['fpf'] #fpf clustering
+            K, F = clustering['kmeans'], clustering['fpf']
+            kmlh_song_set, kmsh_song_set = [], []
+            fpflh_song_set, fpfsh_song_set = [], []
 
-            k_means_linear_heuristic_song_set = []
-            k_means_spheric_heuristic_song_set = []
-            first_point_first_linear_heuristic_song_set = []
-            first_point_first_spheric_heuristic_song_set = []
-            
-            
-            #every cluster of a clustering generates 4*m songs
-            for i, cluster in enumerate(K[0]):
-                n = len(cluster)
-                if n >= 4:
-                    m = playlist_length / (K[2] * 4)
-                    k_means_linear_heuristic_song_set.extend(linear_heuristic(cluster, K[1][i], m, k_means_linear_heuristic_song_set))
-                    print(f"Generated song set with linear heuristic for period {period} and K-Means cluster #{i}")
-                    k_means_spheric_heuristic_song_set.extend(spheric_heuristic(cluster, K[1][i], m, k_means_spheric_heuristic_song_set))
-                    print(f"Generated song set with spheric heuristic for period {period} and K-Means cluster #{i}")
-                else:
-                    enough_cluster_points = False
-                    break
+            for cluster_set, song_set, heuristic in [(K, kmlh_song_set, 'l'), (K, kmsh_song_set, 's'), (F, fpflh_song_set, 'l'), (F, fpfsh_song_set, 's')]:
+                for i, cluster in enumerate(cluster_set[0]):
+                    n = len(cluster)
+                    if n >= 4:
+                        m = playlist_length / (cluster_set[2] * 4)
+                        if heuristic == 'l':
+                            song_set.extend(linear_heuristic(cluster, cluster_set[1][i], m, song_set))
+                        else:
+                            song_set.extend(spheric_heuristic(cluster, cluster_set[1][i], m, song_set))
+                    else:
+                        enough_cluster_points = False
+                        break
 
-            for i, cluster in enumerate(F[0]):
-                n = len(cluster)
-                if n >= 4:
-                    m = playlist_length / (F[2] * 4)
-                    first_point_first_linear_heuristic_song_set.extend(linear_heuristic(cluster, F[1][i], m, first_point_first_linear_heuristic_song_set))
-                    print(f"Generated song set with linear heuristic for period {period} and FPF cluster #{i}")
-                    first_point_first_spheric_heuristic_song_set.extend(spheric_heuristic(cluster, F[1][i], m, first_point_first_linear_heuristic_song_set))
-                    print(f"Generated song set with spheric heuristic for period {period} and FPF cluster #{i}")
-                else:
-                    enough_cluster_points = False
-                    break
-            
-
-            #we compute the following only if every cluster has at least 4 points
             if enough_cluster_points:
-                #store the generated song sets in a dictionary that maps an identifier to the corresponding song set
-                clustering_song_sets = {
-                    'kmlh':k_means_linear_heuristic_song_set,
-                    'kmsh':k_means_spheric_heuristic_song_set,
-                    'fpflh':first_point_first_linear_heuristic_song_set,
-                    'fpfsh':first_point_first_spheric_heuristic_song_set
-                }
-            
-                #store the song_sets 
-                song_sets[period] = clustering_song_sets
+                song_sets[period] = {'kmlh': kmlh_song_set, 'kmsh': kmsh_song_set, 'fpflh': fpflh_song_set, 'fpfsh': fpfsh_song_set}
             else:
                 print(f"Not enough cluster points for period {period}")
-    
-    
+
     return song_sets
+
             
 
 
