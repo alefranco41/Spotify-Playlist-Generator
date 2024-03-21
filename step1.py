@@ -84,7 +84,10 @@ def compute_periods():
 def compute_listening_history(periods):
     history = {}
     for period, tracks in periods.items():
-        hour = period.hour
+        if isinstance(period, datetime):
+            hour = period.hour
+        else:
+            hour = period
         if not history.get(hour,None):
             history[hour] = []
         track_ids = [track['id'] for track in tracks]
