@@ -88,8 +88,9 @@ def retrieve_optimal_solution_songs(optimal_solutions_indexes, playlist_patterns
 
 #upload the playlists generated for every period on Spotify
 def create_playlists(playlists):
+    user_id = spotify.current_user()['id']
     for period, track_ids in playlists.items():
-        playlist = spotify.user_playlist_create(spotify.current_user()['id'], f"Period_{period}", public=False)
+        playlist = spotify.user_playlist_create(user_id, f"Period_{period}", public=False)
         spotify.playlist_add_items(playlist['id'], track_ids)
         print(f"Uploaded on Spotify the optimal playlist for period {period}")
 
