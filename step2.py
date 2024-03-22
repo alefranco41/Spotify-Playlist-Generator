@@ -1,41 +1,195 @@
 import pickle
-from step1 import compute_listening_history
+from step1 import hours, feature_names_to_remove
 from scipy.spatial.distance import euclidean
 from listening_history_manager import spotify
+from datetime import datetime, timedelta
+import random
+
 
 song_sets_file_path = "most_similar_song_set.bin"
-listening_history_file_path = "listening_history.bin"
+periods_file_path = "periods.bin"
+playlist_length = 10
+today_day_name = datetime.now().strftime("%A")
 
 #retrieve the listening history and the song sets generated in the first step
 def retrieve_data():
     song_sets = None
-    listening_history = None
+    periods = None
     with open(song_sets_file_path, "rb") as file:
         song_sets = pickle.load(file)
 
-    with open(listening_history_file_path, "rb") as file:
-        listening_history = pickle.load(file)
+    with open(periods_file_path, "rb") as file:
+        periods = pickle.load(file)
 
     print("Retrieved the listening history and the song sets generated from the previous step")
-    return song_sets, listening_history
+    return song_sets, periods
 
+
+
+def choose_pattern_with_random_probability(patterns_with_enough_songs):
+    timestamps = [pattern[0]['played_at'] for pattern in patterns_with_enough_songs]
+    probabilities = [1 / (i + 1) for i in range(len(timestamps))]
+    chosen_pattern = random.choices(patterns_with_enough_songs, weights=probabilities, k=1)
+    return chosen_pattern[0]
+
+
+def overlap_patterns(today_period_patterns):
+    chosen_pattern = []
+
+    i = len(today_period_patterns) - 1
+    while len(chosen_pattern) < playlist_length:
+        chosen_pattern.extend(today_period_patterns[i])
+        i -= 1
+    
+    chosen_pattern.sort(key=lambda x: x['played_at'].time())
+    chosen_pattern = chosen_pattern[:playlist_length]
+
+    return chosen_pattern
+
+def compute_closest_pattern(period,history_patterns):
+    ordered_patterns = sorted(history_patterns, key=lambda x: abs(x - period), reverse=True)
+    chosen_pattern = None
+
+    while ordered_patterns:
+        patterns = history_patterns.get(ordered_patterns.pop(), None)
+        today_period_patterns = patterns.get(today_day_name,None)
+        if today_period_patterns:
+            patterns_with_enough_songs = [pattern for pattern in today_period_patterns if len(pattern) > playlist_length]
+            if patterns_with_enough_songs:
+                chosen_pattern = choose_pattern_with_random_probability(patterns_with_enough_songs)
+            else:
+                if sum([len(pattern) for pattern in today_period_patterns]) >= playlist_length:
+                    chosen_pattern = overlap_patterns(today_period_patterns)
+        if chosen_pattern:
+            break
+
+    return chosen_pattern
+        
+
+
+
+def compute_best_history_patterns(history_patterns):
+    best_history_patterns = {}
+    for period, patterns in history_patterns.items():
+        chosen_pattern = None
+        today_period_patterns = patterns.get(today_day_name, None)
+        if today_period_patterns:
+            patterns_with_enough_songs = [pattern for pattern in today_period_patterns if len(pattern) > playlist_length]
+            if patterns_with_enough_songs:
+                chosen_pattern = choose_pattern_with_random_probability(patterns_with_enough_songs)
+            else:
+                if sum([len(pattern) for pattern in today_period_patterns]) >= playlist_length:
+                    chosen_pattern = overlap_patterns(today_period_patterns)
+        
+        if not today_period_patterns or not chosen_pattern:
+            chosen_pattern = compute_closest_pattern(period, history_patterns)
+
+        if chosen_pattern:
+            best_history_patterns[period] = chosen_pattern
+
+    return best_history_patterns
+
+def compute_history_pattern_day_hour(periods, timestamp):
+    patterns = []
+    current_pattern = []
+
+    previous_timestamp = timestamp - timedelta(hours=1)
+    last_pattern_end = None
+    while previous_timestamp in periods:
+        previous_tracks = sorted(periods[previous_timestamp], key=lambda x: x['played_at'])
+        if last_pattern_end is not None:
+            previous_tracks = [track for track in previous_tracks if track['played_at'] > last_pattern_end]
+        if previous_tracks:
+            last_pattern_end = previous_tracks[-1]['played_at']
+        previous_timestamp -= timedelta(hours=1)
+
+    
+    
+    tracks = sorted(periods[timestamp], key=lambda x: x['played_at'])
+    
+    if last_pattern_end is not None:
+        first_track_index = next((i for i, track in enumerate(tracks) if track['played_at'] - tracks[i-1]['played_at'] > timedelta(minutes=15)), None)
+        if first_track_index is not None:
+            tracks = tracks[first_track_index:]
+
+    for track in tracks:
+            if not current_pattern or track['played_at'] - current_pattern[-1]['played_at'] <= timedelta(minutes=15):
+                current_pattern.append(track)
+            else:
+                patterns.append(current_pattern)
+                current_pattern = [track]
+
+    end_of_period = timestamp + timedelta(hours=1)
+    last_period_song_timestamp = current_pattern[-1]['played_at'].replace(tzinfo=None)
+    while end_of_period - last_period_song_timestamp <= timedelta(minutes=15):
+            end_of_period = timestamp + timedelta(hours=1)
+            if end_of_period in periods:
+                next_tracks = periods[end_of_period]
+                next_tracks = sorted(next_tracks, key=lambda x: x['played_at'])
+                for next_track in next_tracks:
+                    if next_track['played_at'] - current_pattern[-1]['played_at'] > timedelta(minutes=15):
+                        break
+                    current_pattern.append(next_track)
+                last_period_song_timestamp = current_pattern[-1]['played_at'].replace(tzinfo=None)
+                timestamp = end_of_period
+            else:
+                break
+
+    
+    patterns.append(current_pattern)
+    return patterns
+
+
+def compute_listening_history_patterns(periods):
+    history_patterns = {}
+    sorted_periods = sorted(periods.items(), key=lambda x: x[0], reverse=True)
+    for hour in hours:
+        history_patterns_days = {}
+        for timestamp, tracks in sorted_periods:
+            if timestamp.hour == hour:
+                day = timestamp.strftime("%A")
+                if not history_patterns_days.get(day, None):
+                    history_patterns_days[day] = []
+                
+                history_patterns_days[day].extend(compute_history_pattern_day_hour(periods, timestamp))
+        history_patterns[hour] = history_patterns_days
+
+    return history_patterns
+
+
+def get_features(tracks):
+    if tracks[0].get('track', None):
+        ids = [track['track']['id'] for track in tracks]
+    else:
+        ids = [track['id'] for track in tracks]
+    features = spotify.audio_features(tracks=ids)
+    feature_list = []
+    for feature in features:
+        if feature:
+            track_features = feature.get('id', None)
+            if track_features:
+                final_features = dict(filter(lambda item: item[0] not in feature_names_to_remove, feature.items()))
+                feature_list.append(final_features)
+
+    return feature_list
 #Dynamic programming algotithm that computes, for every playlist pattern, the best song ordering
 def compute_optimal_solution_indexes(history_patterns, playlist_patterns):
     optimal_solutions_indexes = {}
 
     for period, playlist in playlist_patterns.items():
-        m = len(playlist)
+        if not history_patterns.get(period, None):
+            continue
 
-        if not history_patterns[period]:
-            break
-        
-        k = len(history_patterns[period])
+        history_pattern = get_features(history_patterns[period])
+        playlist = get_features(playlist)
+
+        m = len(playlist)
+        k = len(history_pattern)
 
         if  k > m:
-            history_pattern = history_patterns[period][0:m]
+            history_pattern = history_pattern[0:m]
             k = m
-        else:
-            history_pattern = history_patterns[period]
+
 
         M = []
         V = []
@@ -97,12 +251,20 @@ def create_playlists(playlists):
 
 
 def main():
-    song_sets, listening_history = retrieve_data() 
+    song_sets, periods = retrieve_data() 
+    history_patterns = compute_listening_history_patterns(periods)
+    best_history_patterns = compute_best_history_patterns(history_patterns)
 
-    if song_sets and listening_history:
-        playlist_patterns = compute_listening_history(song_sets) 
-        optimal_solutions_indexes = compute_optimal_solution_indexes(listening_history, playlist_patterns)
-        final_playlists = retrieve_optimal_solution_songs(optimal_solutions_indexes, playlist_patterns)
+
+    for hour, pattern in best_history_patterns.items():
+        print(f"hour = {hour}")
+        for song in pattern:
+            print(song['track']['name'])
+        print("\n")
+
+    if song_sets and periods:
+        optimal_solutions_indexes = compute_optimal_solution_indexes(best_history_patterns, song_sets)
+        final_playlists = retrieve_optimal_solution_songs(optimal_solutions_indexes, song_sets)
         create_playlists(final_playlists)
     else:
         print("No song sets retrieved")
