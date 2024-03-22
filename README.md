@@ -4,6 +4,8 @@ An automated method to generate highly personalized playlists
 Installation Instructions:
 1) Install the requirements listed in 'requirements.txt' (pip install -r requirements.txt)
 2) Register your account to the Spotify Developer Dashboard at the link https://developer.spotify.com/dashboard.
+  a) if you haven't already done so, you will need to verify the email associated to your Spotify account.
+  b) after you have verified the email,  wait about five minutes: Spotify takes time to register your account to the Developer Dashboard.
 3) Go to https://developer.spotify.com/dashboard and create an application 
 4) Use the credentials of the application to set up the variables 'client_id', 'client_secret' and 'redirect_uri' in the file 'listening_history_manager.py'
 5) Run 'step1.py'
