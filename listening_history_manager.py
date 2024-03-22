@@ -3,8 +3,8 @@ from spotipy.oauth2 import SpotifyOAuth
 import spotipy
 from datetime import datetime
 #Spotify application credentials
-client_id = '20e93cf42c624e6f863e1a55230fee16'
-client_secret = 'b6df3671c90c4fbbbb8a103aa666ef2d'
+client_id = '17bda904787947c099271407b49da1c4'
+client_secret = 'c41d4c247f1e47deb12a5c3aa168c458'
 redirect_uri = 'https://www.google.com'
 
 #interact with the spotify API
