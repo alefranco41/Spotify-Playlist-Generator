@@ -406,11 +406,6 @@ def generate_clustering_song_sets(clusterings):
 def main():
     #compute periods based on the playing timestamp of every song
     periods = compute_periods()
-    for timestamp, tracks in periods.items():
-        print(timestamp,"\n")
-        for track in tracks:
-            print(track['played_at'], track['track']['name'])
-        
 
     #use the Spotify API to retrieve the audio features of the tracks in the listening history
     #store the listening history (filtered by periods) in a dictionary
