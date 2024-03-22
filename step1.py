@@ -328,8 +328,15 @@ def linear_heuristic(cluster, centroid, m, song_set):
             #Get recommendations from Spotify API based on seed track and target features
             #if we set limit to be greater than playlist_length, we ensure that our playlist doesn't have any duplicate songs
             tracks = [point[1]['id']]
-            recommendations = spotify.recommendations(seed_tracks=tracks, limit=int(m), kwargs=modified_song_data).get('tracks')
-            recommended_tracks.extend(recommendations)
+            recommendations = spotify.recommendations(seed_tracks=tracks, limit=50, kwargs=modified_song_data).get('tracks')
+            #Append recommended tracks to the list
+            count = 0
+            for track in recommendations:
+                if track['id'] not in list(set(song['id'] for song in song_set)):
+                    recommended_tracks.append(track)
+                    count += 1
+                if count == int(m):
+                    break
     return recommended_tracks
 
 
@@ -372,8 +379,16 @@ def spheric_heuristic(cluster, centroid, m, song_set):
         
         #Get recommendations from Spotify API based on the nearest song and target features
         #if we set limit to be greater than playlist_length, we ensure that our playlist doesn't have any duplicate songs
-        recommendations = spotify.recommendations(seed_tracks=[nearest_song['id']], limit=int(m), kwargs=modified_song_data).get('tracks')
-        recommended_tracks.extend(recommendations)
+        recommendations = spotify.recommendations(seed_tracks=[nearest_song['id']], limit=50, kwargs=modified_song_data).get('tracks')
+        
+        #Append recommended tracks to the list
+        count = 0
+        for track in recommendations:
+            if track['id'] not in list(set(song['id'] for song in song_set)):
+                recommended_tracks.append(track)
+                count += 1
+            if count == m:
+                break
 
     return recommended_tracks
 
@@ -421,7 +436,7 @@ def main():
     
     #in order to speed up the process (and avoid too much API requests) we only run the clusterings of the current period
     current_hour = int(datetime.now().hour)
-    hours_to_generate_song_sets = [7,8,9,10]
+    hours_to_generate_song_sets = [7,8]
 
     #pair (NTNA,NTKA) of the selected periods
     listening_habits_periods = {period:listening_habits.get(period, None) for period in hours_to_generate_song_sets}
