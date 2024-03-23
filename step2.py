@@ -265,6 +265,7 @@ def main():
         else:
             print(f"No history patterns found for periods {[key for key in song_sets.keys()]} on day {day_name}")
             print(f"You can try changing the variable 'day_name' to another day, or you might want to rerun 'step1.py' with different periods as input")
+            print(f"You can also try reducing the value of the global variable 'playlist length'")
     else:
         print("No song sets retrieved")
 if __name__ == '__main__':
