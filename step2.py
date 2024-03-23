@@ -219,13 +219,17 @@ def compute_optimal_solution_indexes(history_patterns, playlist_patterns):
         min_index = M[k-1].index(min_value)
         vertices_period = [min_index]
 
+        duplicate_indexes = [0]
         for i in range(k-2, -1, -1):
             t = vertices_period[0]
             min_index = V[i+1][t]
-            if min_index not in vertices_period: #duplicate indexes ?
-                vertices_period.insert(0, min_index)
+            if min_index in vertices_period:
+                duplicate_indexes.insert(0,1)
+            else:
+                duplicate_indexes.insert(0,0)
+            vertices_period.insert(0, min_index)
         
-        optimal_solutions_indexes[period] = vertices_period
+        optimal_solutions_indexes[period] = (vertices_period,duplicate_indexes)
     return optimal_solutions_indexes
 
 
@@ -235,7 +239,23 @@ def retrieve_optimal_solution_songs(optimal_solutions_indexes, playlist_patterns
     
     for period, songs in playlist_patterns.items():
         if optimal_solutions_indexes.get(period, None):
-            playlist = [songs[index]['id'] for index in optimal_solutions_indexes[period]]
+            vertices_period = optimal_solutions_indexes[period][0]
+            duplicate_indexes = optimal_solutions_indexes[period][1]
+
+            n_duplicate_indexes = len([index for index in duplicate_indexes if index == 1])
+            playlist_length = len(vertices_period)
+            limit = playlist_length + n_duplicate_indexes
+
+            playlist = [songs[index]['id'] for index in vertices_period]
+            
+            for i in range(playlist_length):
+                if duplicate_indexes[i]:
+                    recommendations = spotify.recommendations(seed_tracks=[playlist[i]], limit=limit).get('tracks')
+                    for recommendation in recommendations:
+                        if recommendation['id'] not in playlist:
+                            playlist[i] = recommendation['id']
+                            break
+
             print(f"Optimal song ordering for period {period}: {playlist}")
             playlists[period] = playlist
 
