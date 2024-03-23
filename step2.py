@@ -8,7 +8,7 @@ import random
 
 song_sets_file_path = "most_similar_song_set.bin"
 periods_file_path = "periods.bin"
-playlist_length = 48
+playlist_length = 30
 today_day_name = datetime.now().strftime("%A")
 
 #retrieve the listening history and the song sets generated in the first step
@@ -253,7 +253,7 @@ def create_playlists(playlists):
 
 def main():
     song_sets, periods = retrieve_data() 
-    day_name = today_day_name
+    day_name = 'Friday'
 
     if song_sets and periods:
         history_patterns = compute_listening_history_patterns(periods)
