@@ -436,7 +436,7 @@ def main():
     
     #in order to speed up the process (and avoid too much API requests) we only run the clusterings of the current period
     current_hour = int(datetime.now().hour)
-    hours_to_generate_song_sets = [7,8]
+    hours_to_generate_song_sets = [current_hour]
 
     #pair (NTNA,NTKA) of the selected periods
     listening_habits_periods = {period:listening_habits.get(period, None) for period in hours_to_generate_song_sets}
@@ -465,11 +465,11 @@ def main():
                         pickle.dump(most_similar_song_sets, file)
                         print("Song sets uploaded")
             else:
-                 print(f"No valid clusterings produced for periods {hours_to_generate_song_sets}")
+                 print(f"No valid clusterings produced for periods {hours_to_generate_song_sets}, you might want to try different periods by changing the variable 'hours_to_generate_song_sets'")
         else:
-            print(f"No listening history detected for periods {hours_to_generate_song_sets}")
+            print(f"No listening history detected for periods {hours_to_generate_song_sets}, you might want to try different periods by changing the variable 'hours_to_generate_song_sets")
     else:
-        print(f"No habits detected for periods {hours_to_generate_song_sets}")
+        print(f"No habits detected for periods {hours_to_generate_song_sets}, you might want to try different periods by changing the variable 'hours_to_generate_song_sets")
 
 if __name__ == "__main__":
     main()

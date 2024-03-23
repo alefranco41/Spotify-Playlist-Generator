@@ -8,7 +8,7 @@ import random
 
 song_sets_file_path = "most_similar_song_set.bin"
 periods_file_path = "periods.bin"
-playlist_length = 10
+playlist_length = 48
 today_day_name = datetime.now().strftime("%A")
 
 #retrieve the listening history and the song sets generated in the first step
@@ -46,13 +46,13 @@ def overlap_patterns(today_period_patterns):
 
     return chosen_pattern
 
-def compute_closest_pattern(period,history_patterns):
+def compute_closest_pattern(period,history_patterns, day_name):
     ordered_patterns = sorted(history_patterns, key=lambda x: abs(x - period), reverse=True)
     chosen_pattern = None
 
     while ordered_patterns:
         patterns = history_patterns.get(ordered_patterns.pop(), None)
-        today_period_patterns = patterns.get(today_day_name,None)
+        today_period_patterns = patterns.get(day_name,None)
         if today_period_patterns:
             patterns_with_enough_songs = [pattern for pattern in today_period_patterns if len(pattern) > playlist_length]
             if patterns_with_enough_songs:
@@ -68,11 +68,11 @@ def compute_closest_pattern(period,history_patterns):
 
 
 
-def compute_best_history_patterns(history_patterns):
+def compute_best_history_patterns(history_patterns, day_name):
     best_history_patterns = {}
     for period, patterns in history_patterns.items():
         chosen_pattern = None
-        today_period_patterns = patterns.get(today_day_name, None)
+        today_period_patterns = patterns.get(day_name, None)
         if today_period_patterns:
             patterns_with_enough_songs = [pattern for pattern in today_period_patterns if len(pattern) > playlist_length]
             if patterns_with_enough_songs:
@@ -82,7 +82,7 @@ def compute_best_history_patterns(history_patterns):
                     chosen_pattern = overlap_patterns(today_period_patterns)
         
         if not today_period_patterns or not chosen_pattern:
-            chosen_pattern = compute_closest_pattern(period, history_patterns)
+            chosen_pattern = compute_closest_pattern(period, history_patterns, day_name)
 
         if chosen_pattern:
             best_history_patterns[period] = chosen_pattern
@@ -234,9 +234,10 @@ def retrieve_optimal_solution_songs(optimal_solutions_indexes, playlist_patterns
     playlists = {}
     
     for period, songs in playlist_patterns.items():
-        playlist = [songs[index]['id'] for index in optimal_solutions_indexes[period]]
-        print(f"Optimal song ordering for period {period}: {playlist}")
-        playlists[period] = playlist
+        if optimal_solutions_indexes.get(period, None):
+            playlist = [songs[index]['id'] for index in optimal_solutions_indexes[period]]
+            print(f"Optimal song ordering for period {period}: {playlist}")
+            playlists[period] = playlist
 
     return playlists
 
@@ -252,20 +253,18 @@ def create_playlists(playlists):
 
 def main():
     song_sets, periods = retrieve_data() 
-    history_patterns = compute_listening_history_patterns(periods)
-    best_history_patterns = compute_best_history_patterns(history_patterns)
-
-
-    for hour, pattern in best_history_patterns.items():
-        print(f"hour = {hour}")
-        for song in pattern:
-            print(song['track']['name'])
-        print("\n")
+    day_name = today_day_name
 
     if song_sets and periods:
-        optimal_solutions_indexes = compute_optimal_solution_indexes(best_history_patterns, song_sets)
-        final_playlists = retrieve_optimal_solution_songs(optimal_solutions_indexes, song_sets)
-        create_playlists(final_playlists)
+        history_patterns = compute_listening_history_patterns(periods)
+        best_history_patterns = compute_best_history_patterns(history_patterns, day_name)
+        if best_history_patterns:
+            optimal_solutions_indexes = compute_optimal_solution_indexes(best_history_patterns, song_sets)
+            final_playlists = retrieve_optimal_solution_songs(optimal_solutions_indexes, song_sets)
+            create_playlists(final_playlists)
+        else:
+            print(f"No history patterns found for periods {[key for key in song_sets.keys()]} on day {day_name}")
+            print(f"You can try changing the variable 'day_name' to another day, or you might want to rerun 'step1.py' with different periods as input")
     else:
         print("No song sets retrieved")
 if __name__ == '__main__':
