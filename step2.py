@@ -273,7 +273,7 @@ def create_playlists(playlists):
 
 def main():
     song_sets, periods = retrieve_data() 
-    day_name = 'Friday'
+    day_name = today_day_name
 
     if song_sets and periods:
         history_patterns = compute_listening_history_patterns(periods)
