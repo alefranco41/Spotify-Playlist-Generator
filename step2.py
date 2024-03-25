@@ -92,32 +92,26 @@ def compute_best_history_patterns(history_patterns, day_name):
 def compute_history_pattern_day_hour(periods, timestamp):
     patterns = []
     current_pattern = []
-
+    
     previous_timestamp = timestamp - timedelta(hours=1)
-    last_pattern_end = None
-    while previous_timestamp in periods:
-        previous_tracks = sorted(periods[previous_timestamp], key=lambda x: x['played_at'])
-        if last_pattern_end is not None:
-            previous_tracks = [track for track in previous_tracks if track['played_at'] > last_pattern_end]
-        if previous_tracks:
-            last_pattern_end = previous_tracks[-1]['played_at']
-        previous_timestamp -= timedelta(hours=1)
-
-    
-    
     tracks = sorted(periods[timestamp], key=lambda x: x['played_at'])
-    
-    if last_pattern_end is not None:
-        first_track_index = next((i for i, track in enumerate(tracks) if track['played_at'] - tracks[i-1]['played_at'] > timedelta(minutes=15)), None)
-        if first_track_index is not None:
-            tracks = tracks[first_track_index:]
+
+    previous_tracks = periods.get(previous_timestamp, None)
+    if previous_tracks:
+        previous_tracks = sorted(previous_tracks, key=lambda x: x['played_at'])
+        if tracks[0]['played_at'] - previous_tracks[-1]['played_at'] <= timedelta(minutes=15):
+            first_track_index = next((i for i, track in enumerate(tracks) if track['played_at'] - tracks[i-1]['played_at'] > timedelta(minutes=15)), None)
+            if first_track_index is not None:
+                tracks = tracks[first_track_index:]
+            else:
+                return patterns
 
     for track in tracks:
-            if not current_pattern or track['played_at'] - current_pattern[-1]['played_at'] <= timedelta(minutes=15):
-                current_pattern.append(track)
-            else:
-                patterns.append(current_pattern)
-                current_pattern = [track]
+        if not current_pattern or track['played_at'] - current_pattern[-1]['played_at'] <= timedelta(minutes=15):
+            current_pattern.append(track)
+        else:
+            patterns.append(current_pattern)
+            current_pattern = [track]
 
     end_of_period = timestamp + timedelta(hours=1)
     last_period_song_timestamp = current_pattern[-1]['played_at'].replace(tzinfo=None)
@@ -130,11 +124,10 @@ def compute_history_pattern_day_hour(periods, timestamp):
                     if next_track['played_at'] - current_pattern[-1]['played_at'] > timedelta(minutes=15):
                         break
                     current_pattern.append(next_track)
-                last_period_song_timestamp = current_pattern[-1]['played_at'].replace(tzinfo=None)
+                    last_period_song_timestamp = current_pattern[-1]['played_at'].replace(tzinfo=None)
                 timestamp = end_of_period
             else:
                 break
-
     
     patterns.append(current_pattern)
     return patterns
@@ -265,15 +258,15 @@ def retrieve_optimal_solution_songs(optimal_solutions_indexes, playlist_patterns
 def create_playlists(playlists):
     user_id = spotify.current_user()['id']
     for period, track_ids in playlists.items():
-        playlist = spotify.user_playlist_create(user_id, f"Period_{period}", public=False)
-        spotify.playlist_add_items(playlist['id'], track_ids)
+        #playlist = spotify.user_playlist_create(user_id, f"Period_{period}", public=False)
+        #spotify.playlist_add_items(playlist['id'], track_ids)
         print(f"Uploaded on Spotify the optimal playlist for period {period}")
 
 
 
 def main():
     song_sets, periods = retrieve_data() 
-    day_name = today_day_name
+    day_name = 'Friday'
 
     if song_sets and periods:
         history_patterns = compute_listening_history_patterns(periods)
