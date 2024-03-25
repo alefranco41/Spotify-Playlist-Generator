@@ -8,7 +8,7 @@ import random
 
 song_sets_file_path = "most_similar_song_set.bin"
 periods_file_path = "periods.bin"
-playlist_length = 30
+playlist_length = 48
 today_day_name = datetime.now().strftime("%A")
 
 #retrieve the listening history and the song sets generated in the first step
@@ -258,8 +258,8 @@ def retrieve_optimal_solution_songs(optimal_solutions_indexes, playlist_patterns
 def create_playlists(playlists):
     user_id = spotify.current_user()['id']
     for period, track_ids in playlists.items():
-        #playlist = spotify.user_playlist_create(user_id, f"Period_{period}", public=False)
-        #spotify.playlist_add_items(playlist['id'], track_ids)
+        playlist = spotify.user_playlist_create(user_id, f"Period_{period}", public=False)
+        spotify.playlist_add_items(playlist['id'], track_ids)
         print(f"Uploaded on Spotify the optimal playlist for period {period}")
 
 
