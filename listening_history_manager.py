@@ -1,7 +1,9 @@
 import pickle
 from spotipy.oauth2 import SpotifyOAuth
 import spotipy
-from datetime import datetime
+from datetime import datetime, timedelta
+import math
+
 #Spotify application credentials
 client_id = '17bda904787947c099271407b49da1c4'
 client_secret = 'c41d4c247f1e47deb12a5c3aa168c458'
@@ -50,3 +52,23 @@ for i in range(1, len(recently_played_songs)):
 
 recently_played_songs = unique_songs
 
+#if the user provides a "StreamingHistory.json" file, then we use this function to filter the listening history.
+#we order the listening history by decreasing playing timestamp
+#we remove consecutive duplicates and songs that have been played for less than 50% of the its duration
+def filter_listening_history_file(csv_data):
+    for item in csv_data:
+        item['endTime'] = datetime.strptime(item['endTime'], "%Y-%m-%d %H:%M")
+
+    recently_played_songs = sorted(csv_data, key=lambda x: x['endTime'], reverse=True)
+    unique_songs = [recently_played_songs[0]]
+
+    for i in range(1, len(recently_played_songs)):
+        current_song = recently_played_songs[i]
+        previous_song = recently_played_songs[i - 1]
+        
+        listen_percentage = math.floor(100 * (int(current_song['msPlayed']) / int(current_song['msDuration'])))
+        if current_song['TrackID'] != previous_song['TrackID'] and listen_percentage >= 50:
+            unique_songs.append(current_song)
+
+    recently_played_songs = unique_songs
+    return recently_played_songs
