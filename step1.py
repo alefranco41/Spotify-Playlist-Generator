@@ -1,24 +1,27 @@
-from datetime import datetime
-from sklearn.preprocessing import StandardScaler
+#general purpose modules
+from datetime import datetime, timedelta #manage timestamps of songs
+import math
+import pickle
+from listening_history_manager import recently_played_songs, spotify, filter_listening_history_file
+from tzlocal import get_localzone #get current time zone
+import pytz #convert Spotify's time zone to the current one
+import csv #retrieve data from the "StreamingHistory.json" file
+
+#modules for clustering
+from sklearn.preprocessing import StandardScaler 
 from sklearn.metrics import davies_bouldin_score
 from scipy.spatial.distance import pdist, squareform
 from scipy.spatial import distance
+from k_means_constrained import KMeansConstrained #K-means clustering with constraints to impose a minimum number of points for each cluster
 import numpy as np
-import math
-import pickle
-from listening_history_manager import recently_played_songs, spotify
-from k_means_constrained import KMeansConstrained
-from tzlocal import get_localzone
-import pytz
 
-feature_names_to_remove = ["uri", "track_href", "analysis_url", "type", "duration_ms"]
-playlist_length = 48
+#global variables
+playlist_length = 48 #length of the song sets, needed to compute how many recommendations each cluster point has to generate
+feature_names_to_remove = ["uri", "track_href", "analysis_url", "type", "duration_ms"] #track features not needed for clustering
+days = set() #set of the days (datetime objects) in which songs have been played
+hours = set() #set of hours (int objects) in which songs have been played
 
-days = set()
-hours = [i for i in range(0,24)]
-period_hours = set()
-
-#Spotify API feature intervals
+#Spotify API intervals for audio features, needed for the song-set generation with spheric heuristic
 constraints = {
     'target_danceability': {'min':0, 'max':1},
     'target_energy': {'min':0, 'max':1}, 
@@ -34,8 +37,32 @@ constraints = {
     'target_time_signature': {'min':0, 'max':5}
 }
 
-#NTNA: number of new tracks by new artists played during day 'day', during the period 'hour'
-#NTKA: number of new tracks by known artists played during day 'day', during the period 'hour'
+#check if the module 'step1' is running with a "StreamingHistory.json" file provided by the user or not.
+#this check is needed because the structure of the dictionary 'periods' will be different. 
+def check_listening_history_file(periods):
+    if list(periods.values())[0][0].get('TrackID', None):
+        return True
+    return False
+
+#convert the "StreamingHistory.json" file provided by the user in a list of dictionaries.
+def csv_to_dict(csv_file):
+    data = []
+    try:
+        with open(csv_file, 'r') as file:
+            reader = csv.reader(file, delimiter=';')
+            keys = next(reader)  
+            for row in reader:
+                data.append(dict(zip(keys, row)))
+    except Exception:
+        data = []
+        print(f"An error occurred while trying to load data from file {csv_file}.")
+    else:
+        data = filter_listening_history_file(data)
+    return data
+
+
+#dNTNA: number of new tracks by new artists played in a given period
+#dNTKA: number of new tracks by known artists played in a given period
 def compute_dNTNA_dNTKA(current_period, periods):
     current_period_songs = periods.get(current_period)
     new_song = True
@@ -46,11 +73,21 @@ def compute_dNTNA_dNTKA(current_period, periods):
         for period, tracks in periods.items():
             if period < current_period:
                 for track in tracks:
-                    if track['track']['id'] == song['track']['id']:
+                    if check_listening_history_file(periods):
+                        track_id = track['TrackID']
+                        track_artist_id = track['artistName']
+                        current_period_track_id = song['TrackID']
+                        current_period_track_artist_id = song['artistName']
+                    else:
+                        track_id = track['track']['id']
+                        track_artist_id = track['track']['artists'][0]['id']
+                        current_period_track_id = song['track']['id']
+                        current_period_track_artist_id = song['track']['artists'][0]['id']
+
+                    if track_id == current_period_track_id:
                         new_song = False
-                    
-                    if track['track']['artists'][0]['id'] == song['track']['artists'][0]['id']:
-                        new_artist = False
+                    if track_artist_id == current_period_track_artist_id:
+                            new_artist = False
         if new_song and new_artist:
             period_dNTNA += 1
         if new_song and not new_artist:
@@ -59,34 +96,55 @@ def compute_dNTNA_dNTKA(current_period, periods):
     return period_dNTNA,period_dNTKA
 
 
-#dictionary that maps a period (datetime) to the list of tracks played in that period
-def compute_periods():
+#dictionary that maps a period to the list of tracks played in that period
+#a period is identified by the day (year/month/day) and the hour in which some tracks in the listening history have been played
+def compute_periods(listening_history_file_data):
     periods = {}
-    local_timezone = get_localzone()
+    
+    if listening_history_file_data:
+        songs = listening_history_file_data
+    else:
+        songs = recently_played_songs
 
-    for track_item in recently_played_songs:
-        #a period is identified by the day and the hour in which some tracks in the listening history have been played
-        timestamp = datetime.strptime(track_item['played_at'], "%Y-%m-%dT%H:%M:%S.%fZ")
-        timestamp = pytz.utc.localize(timestamp)
-        timestamp = timestamp.astimezone(local_timezone)
-        track_item['played_at'] = timestamp
-        timestamp = timestamp.replace(minute=0, second=0, microsecond=0).replace(tzinfo=None)
+    for track_item in songs:
+        if listening_history_file_data:
+            timestamp = track_item['endTime'] - timedelta(milliseconds=int(track_item['msPlayed']))
+        else:
+            timestamp = datetime.strptime(track_item['played_at'], "%Y-%m-%dT%H:%M:%S.%fZ")
+            timestamp = pytz.utc.localize(timestamp)
+            timestamp = timestamp.astimezone(get_localzone())
+            track_item['played_at'] = timestamp            
         
+        timestamp = timestamp.replace(minute=0, second=0, microsecond=0).replace(tzinfo=None)
         day = datetime(timestamp.year, timestamp.month, timestamp.day)
-        hour = timestamp.hour
+        hour = timestamp.hour            
         days.add(day)
-        period_hours.add(hour)
+        hours.add(hour)
 
         if not periods.get(timestamp, None):
             periods[timestamp] = []
         
-        #we are only interested in the 'track' data returned by the Spotify API response
         periods[timestamp].append(track_item)
     
     return periods
 
+#compute the track ids needed to get the audio features through the Spotify API
+def compute_track_ids(period, tracks):
+    listening_history_file = False
+    if tracks[0].get('TrackID', None):
+        listening_history_file = True
 
-#dictionary that maps a period (hour) to a list of features dictionaries, one for every track in that period
+    if listening_history_file:
+        track_ids = [track['TrackID'] for track in tracks]
+    else:
+        if isinstance(period, datetime):
+            track_ids = [track['track']['id'] for track in tracks]
+        else: 
+            track_ids = [track['id'] for track in tracks]            
+
+    return track_ids
+
+#dictionary that maps a period (hour) to a list of (filtered) features dictionaries, one for every track in that period
 def compute_listening_history(periods):
     history = {}
     for period, tracks in periods.items():
@@ -96,10 +154,7 @@ def compute_listening_history(periods):
             hour = period
         if not history.get(hour,None):
             history[hour] = []
-        if isinstance(period, datetime):
-            track_ids = [track['track']['id'] for track in tracks]
-        else:
-            track_ids = [track['id'] for track in tracks]
+        track_ids = compute_track_ids(period, tracks)
         features = spotify.audio_features(tracks=track_ids)
         for feature in features:
             if feature:
@@ -114,7 +169,7 @@ def compute_listening_history(periods):
 #dictionary that maps every period hour present in the listening history to the relative pair (NTNA,NTKA)
 def compute_listening_habits(periods): 
     Ph = {}
-    for hour in period_hours:
+    for hour in hours:
         dNTNA = 0
         dNTKA = 0
         h = 0
@@ -132,7 +187,7 @@ def compute_listening_habits(periods):
 
 
 #for each period, return the most similar song set among the four generated
-def compute_most_similar_song_sets(song_sets, periods, listening_habits): 
+def compute_most_similar_song_sets(song_sets, periods, listening_habits):
     #dictionary that maps a period to a dictionary of listening habits (one for each song set of relative to that period)
     Ph = {}
     for period_song_set, songsets in  song_sets.items():
@@ -147,8 +202,12 @@ def compute_most_similar_song_sets(song_sets, periods, listening_habits):
                 track_song_set_id = track_item_song_set['id']
                 track_song_set_artist = track_item_song_set['artists'][0]['id']
 
-                history_ids = [track_item_history['track']['id'] for period_history, tracks_history in periods.items() for track_item_history in tracks_history ]
-                history_artists = [track_item_history['track']['artists'][0]['id'] for period_history, tracks_history in periods.items() for track_item_history in tracks_history]
+                if check_listening_history_file():
+                    history_ids = [track_item_history['TrackID'] for period_history, tracks_history in periods.items() for track_item_history in tracks_history ]
+                    history_artists = [track_item_history['artistName'] for period_history, tracks_history in periods.items() for track_item_history in tracks_history]
+                else:
+                    history_ids = [track_item_history['track']['id'] for period_history, tracks_history in periods.items() for track_item_history in tracks_history ]
+                    history_artists = [track_item_history['track']['artists'][0]['id'] for period_history, tracks_history in periods.items() for track_item_history in tracks_history]
 
                 if track_song_set_id not in history_ids and track_song_set_artist not in history_artists:
                     ntna += 1
@@ -328,7 +387,7 @@ def linear_heuristic(cluster, centroid, m, song_set):
             #Get recommendations from Spotify API based on seed track and target features
             #if we set limit to be greater than playlist_length, we ensure that our playlist doesn't have any duplicate songs
             tracks = [point[1]['id']]
-            recommendations = spotify.recommendations(seed_tracks=tracks, limit=50, kwargs=modified_song_data).get('tracks')
+            recommendations = spotify.recommendations(seed_tracks=tracks, limit=playlist_length+1, kwargs=modified_song_data).get('tracks')
             #Append recommended tracks to the list
             count = 0
             for track in recommendations:
@@ -379,7 +438,7 @@ def spheric_heuristic(cluster, centroid, m, song_set):
         
         #Get recommendations from Spotify API based on the nearest song and target features
         #if we set limit to be greater than playlist_length, we ensure that our playlist doesn't have any duplicate songs
-        recommendations = spotify.recommendations(seed_tracks=[nearest_song['id']], limit=50, kwargs=modified_song_data).get('tracks')
+        recommendations = spotify.recommendations(seed_tracks=[nearest_song['id']], limit=playlist_length+1, kwargs=modified_song_data).get('tracks')
         
         #Append recommended tracks to the list
         count = 0
@@ -419,9 +478,18 @@ def generate_clustering_song_sets(clusterings):
 
 
 def main():
-    #compute periods based on the playing timestamp of every song
-    periods = compute_periods()
+    #try to retrieve the "StreamingHistory.json" file
+    listening_history_file_data = []
+    input_message = """If you own the file "StreamingHistory.json" obtained through Spotify's "Request data" feature, insert its path here, press ENTER otherwise: """
+    listening_history_file = input(input_message)
+    if listening_history_file:
+        listening_history_file_data = csv_to_dict(listening_history_file)
+    
+    if not listening_history_file_data:
+        print("Since a valid listening history file was not provided,\nthe software will try to generate a playlist by using the last 50 songs played through the Spotify API")
 
+    #compute periods based on the playing timestamp of every song
+    periods = compute_periods(listening_history_file_data)
     #use the Spotify API to retrieve the audio features of the tracks in the listening history
     #store the listening history (filtered by periods) in a dictionary
     listening_history = compute_listening_history(periods)
@@ -433,10 +501,10 @@ def main():
     #compute the listening habits
     listening_habits = compute_listening_habits(periods)
     print("Computed listening habits ")
-    
+
     #in order to speed up the process (and avoid too much API requests) we only run the clusterings of the current period
     current_hour = int(datetime.now().hour)
-    hours_to_generate_song_sets = [current_hour]
+    hours_to_generate_song_sets = [10]
 
     #pair (NTNA,NTKA) of the selected periods
     listening_habits_periods = {period:listening_habits.get(period, None) for period in hours_to_generate_song_sets}
