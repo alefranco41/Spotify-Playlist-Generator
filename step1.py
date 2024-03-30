@@ -6,6 +6,7 @@ from listening_history_manager import recently_played_songs, spotify, filter_lis
 from tzlocal import get_localzone #get current time zone
 import pytz #convert Spotify's time zone to the current one
 import csv #retrieve data from the "StreamingHistory.json" file
+import os
 
 #modules for clustering
 from sklearn.preprocessing import StandardScaler 
@@ -20,7 +21,12 @@ playlist_length = 48 #length of the song sets, needed to compute how many recomm
 feature_names_to_remove = ["uri", "track_href", "analysis_url", "type", "duration_ms"] #track features not needed for clustering
 days = set() #set of the days (datetime objects) in which songs have been played
 hours = set() #set of hours (int objects) in which songs have been played
-
+listening_history_suffix = "_listening_history.bin"
+most_similar_song_sets_suffix = "_most_similar_song_sets.bin"
+periods_suffix = "_periods.bin"
+#in order to speed up the process (and avoid too much API requests) we only run the clusterings of the current period
+current_hour = int(datetime.now().hour)
+hours_to_generate_song_sets = [7,8]
 #Spotify API intervals for audio features, needed for the song-set generation with spheric heuristic
 constraints = {
     'target_danceability': {'min':0, 'max':1},
@@ -36,6 +42,18 @@ constraints = {
     'target_tempo': {'min':float('-inf'), 'max':float('inf')},
     'target_time_signature': {'min':0, 'max':5}
 }
+
+
+def delete_files():
+    for file in os.listdir():
+        if file.endswith(".bin") and file != "recently_played_songs.bin" and file != "playlists.bin":
+            os.remove(file)
+
+def compute_prefix_name(listening_history_file):
+    file_name = os.path.basename(listening_history_file)
+    file_name_without_extension = os.path.splitext(file_name)[0]
+    file_name_without_underscore = file_name_without_extension.replace("_", "")
+    return file_name_without_underscore
 
 #check if the module 'step1' is running with a "StreamingHistory.json" file provided by the user or not.
 #this check is needed because the structure of the dictionary 'periods' will be different. 
@@ -202,7 +220,7 @@ def compute_most_similar_song_sets(song_sets, periods, listening_habits):
                 track_song_set_id = track_item_song_set['id']
                 track_song_set_artist = track_item_song_set['artists'][0]['id']
 
-                if check_listening_history_file():
+                if check_listening_history_file(periods):
                     history_ids = [track_item_history['TrackID'] for period_history, tracks_history in periods.items() for track_item_history in tracks_history ]
                     history_artists = [track_item_history['artistName'] for period_history, tracks_history in periods.items() for track_item_history in tracks_history]
                 else:
@@ -478,6 +496,7 @@ def generate_clustering_song_sets(clusterings):
 
 
 def main():
+    delete_files()
     #try to retrieve the "StreamingHistory.json" file
     listening_history_file_data = []
     input_message = """If you own the file "StreamingHistory.json" obtained through Spotify's "Request data" feature, insert its path here, press ENTER otherwise: """
@@ -485,26 +504,27 @@ def main():
     if listening_history_file:
         listening_history_file_data = csv_to_dict(listening_history_file)
     
-    if not listening_history_file_data:
+    if listening_history_file_data:
+        prefix_name = compute_prefix_name(listening_history_file)
+    else:
         print("Since a valid listening history file was not provided,\nthe software will try to generate a playlist by using the last 50 songs played through the Spotify API")
 
     #compute periods based on the playing timestamp of every song
     periods = compute_periods(listening_history_file_data)
+    periods_file_path = prefix_name + periods_suffix
+    with open(periods_file_path, "wb") as file:
+            pickle.dump(periods, file)
+    print("Computed periods")
     #use the Spotify API to retrieve the audio features of the tracks in the listening history
     #store the listening history (filtered by periods) in a dictionary
     listening_history = compute_listening_history(periods)
+    listening_history_file_path = prefix_name + listening_history_suffix
+    with open(listening_history_file_path, "wb") as file:
+            pickle.dump(listening_history, file)
     print("Retrieved listening history ")
-
-    with open("periods.bin", "wb") as file:
-            pickle.dump(periods, file)
-
     #compute the listening habits
     listening_habits = compute_listening_habits(periods)
     print("Computed listening habits ")
-
-    #in order to speed up the process (and avoid too much API requests) we only run the clusterings of the current period
-    current_hour = int(datetime.now().hour)
-    hours_to_generate_song_sets = [10]
 
     #pair (NTNA,NTKA) of the selected periods
     listening_habits_periods = {period:listening_habits.get(period, None) for period in hours_to_generate_song_sets}
@@ -529,7 +549,8 @@ def main():
                         for song in song_set:
                             print(song['name'])
                         print("\n")
-                    with open("most_similar_song_set.bin", "wb") as file:
+                    most_similar_song_sets_file_path = prefix_name + most_similar_song_sets_suffix
+                    with open(most_similar_song_sets_file_path, "wb") as file:
                         pickle.dump(most_similar_song_sets, file)
                         print("Song sets uploaded")
             else:
