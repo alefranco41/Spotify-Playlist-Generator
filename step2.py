@@ -1,20 +1,20 @@
 import pickle
-from step1 import feature_names_to_remove, check_listening_history_file, periods_suffix, most_similar_song_sets_suffix, compute_prefix_name
+from step1 import feature_names_to_remove, check_listening_history_file, periods_suffix, most_similar_song_sets_suffix, data_directory
 from scipy.spatial.distance import euclidean #needed in the dynamic programming algorithm
 from listening_history_manager import spotify
-from datetime import datetime, timedelta #manage timestamps of songs in order to compute listening history patterns
+from datetime import timedelta #manage timestamps of songs in order to compute listening history patterns
 import random #choose a random listening history patterns
 import os
 #global variables
 playlist_length = 48
-today_day_name = 'Monday' #datetime.now().strftime("%A")
+today_day_name = 'Tuesday' #datetime.now().strftime("%A")
 
 #retrieve the 'periods' dictionary and the song sets generated in the first step
 def retrieve_data():
     song_sets_file_path = ""
     periods_file_path = ""
 
-    for file in os.listdir():
+    for file in os.listdir(data_directory):
         if file.endswith(most_similar_song_sets_suffix):
             song_sets_file_path = file
         if file.endswith(periods_suffix):
@@ -28,10 +28,10 @@ def retrieve_data():
     periods = None
 
     if song_sets_file_path and periods_file_path:
-        with open(song_sets_file_path, "rb") as file:
+        with open(data_directory + "/" + song_sets_file_path, "rb") as file:
             song_sets = pickle.load(file)
 
-        with open(periods_file_path, "rb") as file:
+        with open(data_directory + "/" + periods_file_path, "rb") as file:
             periods = pickle.load(file)
         print("Retrieved the listening history and the song sets generated from the previous step")
 
@@ -43,8 +43,13 @@ def retrieve_data():
 def choose_pattern_with_random_probability(patterns_with_enough_songs, timestamp_key):
     timestamps = [pattern[0][timestamp_key] for pattern in patterns_with_enough_songs]
     probabilities = [1 / (i + 1) for i in range(len(timestamps))]
-    chosen_pattern = random.choices(patterns_with_enough_songs, weights=probabilities, k=1)
-    return chosen_pattern[0]
+    chosen_pattern = random.choices(patterns_with_enough_songs, weights=probabilities, k=1)[0]
+    if len(chosen_pattern) > playlist_length:
+        excess = len(chosen_pattern) - playlist_length
+        start_index = excess // 2
+        end_index = start_index + playlist_length
+        chosen_pattern = chosen_pattern[start_index:end_index]
+    return chosen_pattern
 
 #if, for a given day and a given hour, no listening history patterns are valid (i.e, if none of the patterns have length greater than playlist_length)
 #we overlap those patterns until we get a pattern with desired length.
@@ -64,11 +69,12 @@ def overlap_patterns(today_period_patterns, timestamp_key, playlist_length):
 #if, for a given day and a given hour, no listening history patterns are valid (i.e, if none of the patterns have length greater than playlist_length
 #and we can't overlap patterns, either beacause we don't have any patterns or because the sum of the length of the patterns is still lower than playlist_length
 #we compute the closest pattern, by trying to apply the previous two functions to the patterns in descending order of dates.
-def compute_closest_pattern(period,history_patterns, day_name, timestamp_key, playlist_length):
+def compute_closest_pattern(period,history_patterns, day_name, timestamp_key):
     ordered_patterns = sorted(history_patterns, key=lambda x: abs(x - period), reverse=True)
     chosen_pattern = None
 
     while ordered_patterns:
+        playlist_length = 48
         patterns = history_patterns.get(ordered_patterns.pop(), None)
         today_period_patterns = patterns.get(day_name,None)
         if today_period_patterns:
@@ -76,41 +82,36 @@ def compute_closest_pattern(period,history_patterns, day_name, timestamp_key, pl
             if patterns_with_enough_songs:
                 chosen_pattern = choose_pattern_with_random_probability(patterns_with_enough_songs, timestamp_key)
             else:
-                if sum([len(pattern) for pattern in today_period_patterns]) >= playlist_length:
-                    chosen_pattern = overlap_patterns(today_period_patterns, timestamp_key, playlist_length)
-        if chosen_pattern:
-            break
-
+                while playlist_length > 0 and not chosen_pattern:
+                    if sum([len(pattern) for pattern in today_period_patterns]) >= playlist_length:
+                        chosen_pattern = overlap_patterns(today_period_patterns, timestamp_key, playlist_length)
+                    playlist_length -= 1
+    
     return chosen_pattern
         
-
-
 #since it is possible (and hopefully likely) that for a given day and a given hour we have more than one listening history pattern, we need to choose the "best" one.
 #we do so by utilizing the three different functions previously described.
 def compute_best_history_patterns(history_patterns, day_name, timestamp_key):
     best_history_patterns = {}
     for period, patterns in history_patterns.items():
         playlist_length = 48
-        while playlist_length > 0:
-            chosen_pattern = None
-            today_period_patterns = patterns.get(day_name, None)
-            if today_period_patterns:
-                patterns_with_enough_songs = [pattern for pattern in today_period_patterns if len(pattern) > playlist_length]
-                if patterns_with_enough_songs:
-                    chosen_pattern = choose_pattern_with_random_probability(patterns_with_enough_songs, timestamp_key)
-                else:
+        chosen_pattern = None
+        today_period_patterns = patterns.get(day_name, None)
+        if today_period_patterns:
+            patterns_with_enough_songs = [pattern for pattern in today_period_patterns if len(pattern) >= playlist_length]
+            if patterns_with_enough_songs:
+                chosen_pattern = choose_pattern_with_random_probability(patterns_with_enough_songs, timestamp_key)
+            else:
+                while playlist_length > 0 and not chosen_pattern:
                     if sum([len(pattern) for pattern in today_period_patterns]) >= playlist_length:
                         chosen_pattern = overlap_patterns(today_period_patterns, timestamp_key, playlist_length)
-            
-            if not today_period_patterns or not chosen_pattern:
-                chosen_pattern = compute_closest_pattern(period, history_patterns, day_name, timestamp_key, playlist_length)
-
-            if chosen_pattern:
-                best_history_patterns[period] = chosen_pattern
-                break
-            
-            playlist_length -= 1
-
+                    playlist_length -= 1
+        else:
+            chosen_pattern = compute_closest_pattern(period,history_patterns, day_name, timestamp_key)
+        
+        if chosen_pattern:
+            best_history_patterns[period] = chosen_pattern
+    
     return best_history_patterns
 
 #given a timestamp (i.e a day and an hour in which songs have been played), we compute the list of the listening history patterns.
@@ -298,11 +299,11 @@ def retrieve_optimal_solution_songs(optimal_solutions_indexes, playlist_patterns
 def create_playlists_dict(final_playlist, day_name, history_patterns, prefix_name):
     playlists = {}
     for period, playlist in final_playlist.items():
-        playlists[(prefix_name,day_name,period,None)] = (playlist,history_patterns[period])
+        playlists[(prefix_name,day_name,period,"our_method")] = (playlist,history_patterns[period])
     
-    with open("playlists.bin", "ab") as file:
+    with open("data/playlists.bin", "ab") as file:
         pickle.dump(playlists, file)
-    print("Playlists uplaoded on playlists.bin")
+    print("Playlists uplaoded on data/playlists.bin")
 
     return playlists
 
@@ -310,7 +311,7 @@ def create_playlists_dict(final_playlist, day_name, history_patterns, prefix_nam
 def create_playlists(playlists):
     user_id = spotify.current_user()['id']
     for playlist_data, tracks in playlists.items():
-        if playlist_data[2]:
+        if playlist_data[3] != "our_method":
             playlist_name = f"{playlist_data[0]}_{playlist_data[1]}_{playlist_data[2]}:00_{playlist_data[3]}"
             method_name = playlist_data[2]
         else:
@@ -352,6 +353,6 @@ def main():
             print(f"You can try changing the variable 'day_name' to another day, or you might want to rerun 'step1.py' with different periods as input")
             print(f"You can also try reducing the value of the global variable 'playlist length'")
     else:
-        print("No song sets retrieved")
+        print("No song sets retrieved from step 1")
 if __name__ == '__main__':
     main()

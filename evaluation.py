@@ -1,11 +1,11 @@
-from step2 import get_features
 import pickle
 from scipy.spatial.distance import euclidean
+import pandas as pd
 
 
 def retrieve_playlists():
     playlists = {}
-    with open("playlists.bin", "rb") as file:
+    with open("data/playlists.bin", "rb") as file:
         try:
             while True:
                 playlists.update(pickle.load(file))
@@ -13,6 +13,16 @@ def retrieve_playlists():
             pass
 
     return playlists
+
+def retrieve_results():
+    results = {}
+    try:
+        with open("data/results.bin", "rb") as file:
+            results = pickle.load(file)
+    except FileNotFoundError:
+        pass
+
+    return results
 
 def compute_vertex_distance(generated_playlist_features, history_pattern_features):
     sum = 0
@@ -40,19 +50,53 @@ def compute_segment_distance(generated_playlist_features, history_pattern_featur
     return sum
     
 
-def compute_playlist_pattern_distances(playlists):
+def compute_playlist_pattern_distances(playlists, existing_results):
+    from step2 import get_features
+    results = {}
+    print("Results for the new generated playlists:\n")
+    i = 1
     for playlist_data, (generated_playlist, history_pattern) in playlists.items():
-        generated_playlist_features = get_features(generated_playlist)
-        history_pattern_features = get_features(history_pattern)
-        if len(history_pattern_features) == len(generated_playlist_features):
+        if len(generated_playlist) == len(history_pattern):
+            generated_playlist_features = get_features(generated_playlist)
+            history_pattern_features = get_features(history_pattern)
             vertex_distance = compute_vertex_distance(generated_playlist_features, history_pattern_features)
             segment_distance = compute_segment_distance(generated_playlist_features, history_pattern_features)
             pattern_distance = vertex_distance + segment_distance
-            print(playlist_data[3], pattern_distance)
+            results[playlist_data] = (pattern_distance,len(generated_playlist))
+            print(f"Result #{i}:\nListening history: {playlist_data[0]}\nDay: {playlist_data[1]}\nHour: {playlist_data[2]}\nMethod: {playlist_data[3]}\nPD: {pattern_distance}\n")
+            i += 1
+        else:
+            results[playlist_data] = None
+    
+    existing_results.update(results)
+    with open("data/results.bin", "wb") as file:
+        pickle.dump(existing_results,file)
+    
+    print("The new generated playlists have been uploaded on 'data/results.bin'")
+
+def generate_spreadsheet(results):
+    data = []
+    for key, value in results.items():
+        LH_filename, day, hour, method = key
+        if value:
+            df = data.append({'LH_filename': LH_filename, 'Day': day, 'Hour': hour, 'Method': method, 'Playlist_Length': value[1], 'Pattern_Distance': value[0]})
+    
+    df = pd.DataFrame(data)
+    df.to_excel("playlists_results.xlsx", index=False)
+    print("Spreadsheet generated: playlist_results.xlsx")
 
 def main():
     playlists = retrieve_playlists()
-    compute_playlist_pattern_distances(playlists)
+    results = retrieve_results()
+    if results:
+        playlists = {key: playlists[key] for key in playlists if key not in results}
+    
+    if playlists:
+        compute_playlist_pattern_distances(playlists, results)
+    else:
+        print("No new generated playlists found")
 
+    results = retrieve_results()
+    generate_spreadsheet(results)
 if __name__ == "__main__":
     main()
