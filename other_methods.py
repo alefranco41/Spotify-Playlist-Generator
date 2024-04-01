@@ -1,33 +1,12 @@
 from listening_history_manager import spotify
-from step1 import feature_names_to_remove, check_listening_history_file, periods_suffix, compute_prefix_name, compute_listening_history, hours_to_generate_song_sets
-from step2 import compute_optimal_solution_indexes, retrieve_optimal_solution_songs, create_playlists, compute_best_history_patterns, compute_listening_history_patterns, today_day_name
+from step1 import feature_names_to_remove, check_listening_history_file, compute_listening_history
+from step2 import compute_optimal_solution_indexes, retrieve_optimal_solution_songs, compute_best_history_patterns, compute_listening_history_patterns, today_day_name,retrieve_data
 from evaluation import retrieve_playlists
 import math
 import pickle
-import os
 
 #global variables
 generated_playlists = retrieve_playlists()
-
-#retrieve the 'periods' dictionary
-def retrieve_data():
-    periods_file_path = ""
-
-    for file in os.listdir():
-        if file.endswith(periods_suffix):
-            periods_file_path = file
-            prefix_name = os.path.splitext(file)[0].split('_')[0]
-            break
-
-    periods = None
-
-    if periods_file_path:
-        with open(periods_file_path, "rb") as file:
-            periods = pickle.load(file)
-
-        print("Retrieved periods")
-
-    return periods, prefix_name
 
 #Each song of the user’s listening history is used as input to the Spotify recommender
 #system to get a similar song. Notice that since this playlist is generated song-by-song, no song-set is produced
@@ -35,7 +14,7 @@ def get_rec_1_recommendations(listening_history,prefix_name):
     playlists = {}
     for period, songs in listening_history.items():
         playlist = []
-        generated_playlist = generated_playlists.get((prefix_name,today_day_name,period,None), None)
+        generated_playlist = generated_playlists.get((prefix_name,today_day_name,period,"our_method"), None)
         if generated_playlist:
             playlist_length = len(generated_playlist[0])
         for song in songs:
@@ -57,7 +36,7 @@ def get_rec_2_recommendations(listening_history,prefix_name):
     playlists = {}
     for period, songs in listening_history.items():
         playlist = []
-        generated_playlist = generated_playlists.get((prefix_name,today_day_name,period,None), None)
+        generated_playlist = generated_playlists.get((prefix_name,today_day_name,period,"our_method"), None)
         if generated_playlist:
             playlist_length = len(generated_playlist[0])
         for i, song in enumerate(songs):
@@ -93,7 +72,7 @@ def get_hyb_1_recommendations(listening_history, periods, prefix_name):
         playlist = []
         blocks = [songs[i:i+5] for i in range(0, len(songs), 5) if len(songs[i:i+5]) == 5]
 
-        generated_playlist = generated_playlists.get((prefix_name,today_day_name,period,None), None)
+        generated_playlist = generated_playlists.get((prefix_name,today_day_name,period,"our_method"), None)
         if generated_playlist:
             playlist_length = len(generated_playlist[0])
 
@@ -149,26 +128,32 @@ def create_playlists_dict(playlists_rec_1, playlists_rec_2, playlists_hyb_1, his
     for period, playlist in playlists_hyb_1.items():
         playlists[(prefix_name,today_day_name,period,"hyb-1")] = (playlist,history_patterns[period])
     
-    with open("playlists.bin", "ab") as file:
+    with open("data/playlists.bin", "ab") as file:
         pickle.dump(playlists, file)
 
+    print("Playlists uplaoded on data/playlists.bin")
+    
     return playlists
 
 def main():
-    periods, prefix_name = retrieve_data()
-    periods_filtered = {period:songs for period, songs in periods.items() if period.hour in hours_to_generate_song_sets and period.strftime("%A") == today_day_name}
-    listening_history_filtered = compute_listening_history(periods_filtered)
+    song_sets, periods, prefix_name = retrieve_data()
+    if song_sets and periods:
+        hours_to_generate_song_sets = list(song_sets.keys())
+        periods_filtered = {period:songs for period, songs in periods.items() if period.hour in hours_to_generate_song_sets}
+        listening_history_filtered = compute_listening_history(periods_filtered)
 
-    if listening_history_filtered and any(len(value) != 0 for value in listening_history_filtered.values()):
-        playlists_rec_1 = get_rec_1_recommendations(listening_history_filtered,prefix_name)
-        playlists_rec_2 = get_rec_2_recommendations(listening_history_filtered,prefix_name)
-        playlists_hyb_1, best_history_patterns = get_hyb_1_recommendations(listening_history_filtered, periods,prefix_name)
+        if listening_history_filtered and any(len(value) != 0 for value in listening_history_filtered.values()):
+            playlists_rec_1 = get_rec_1_recommendations(listening_history_filtered,prefix_name)
+            playlists_rec_2 = get_rec_2_recommendations(listening_history_filtered,prefix_name)
+            playlists_hyb_1, best_history_patterns = get_hyb_1_recommendations(listening_history_filtered, periods,prefix_name)
 
-        playlists = create_playlists_dict(playlists_rec_1, playlists_rec_2, playlists_hyb_1, best_history_patterns, prefix_name)
+            playlists = create_playlists_dict(playlists_rec_1, playlists_rec_2, playlists_hyb_1, best_history_patterns, prefix_name)
 
-        #create_playlists(playlists)
+            #create_playlists(playlists)
+        else:
+            print(f"No listening history detected for hours {hours_to_generate_song_sets}")
     else:
-        print(f"No listening history detected for hours {hours_to_generate_song_sets}")
+        print("No song sets retrieved from step 1")
 
     
 if __name__ == "__main__":
