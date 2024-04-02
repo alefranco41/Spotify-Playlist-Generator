@@ -12,32 +12,32 @@ if os.path.exists('.cache'):
 #Spotify application credentials
 credentials_dicts = [
     {
-        'client_id':'17fcaf36776047b78ea0aa270a8623bb',
-        'client_secret':'97cc7d0a7afc40b7a14f6486466814f7',
+        'client_id':'88af6dfe58a24ae5afd36cd35cff978c',
+        'client_secret':'84202b1ec08442dea6899e16214d8242',
         'redirect_uri':'https://www.google.com'
     },
 
     {
-        'client_id':'832bf6d3f98b480ebc232127280340ed',
-        'client_secret':'502e6aa1c3694437b09f4966bd1517f9',
+        'client_id':'69dddf2b92de442ab9af0b8910c36b01',
+        'client_secret':'eb9d3663520446e99ca89ce0ca8da4ae',
         'redirect_uri':'https://www.google.com'
     },
 
     {
-        'client_id':'3619d4a4c0d74ba08c6f89dfd46091b0',
-        'client_secret':'6c397054d57d4bbe9f8f5d8a42a33b20',
+        'client_id':'f95642ced4744ba89b32c0cb22629c0e',
+        'client_secret':'0e1db2d43493486c97acb6ad07db3a36',
         'redirect_uri':'https://www.google.com'
     },
 
     {
-        'client_id':'257ef042a4e644ff8443156c3f2ae159',
-        'client_secret':'38f1405acbe649a9bd9d04b04ceb0d07',
+        'client_id':'149c7e56cf274adcaf2e57da5641f84c',
+        'client_secret':'7ed5a6a8c6f449f099d3cc3cd62fba6c',
         'redirect_uri':'https://www.google.com'
     },
 
     {
-        'client_id':'8a16ac82ec13485fa09ccd7068de605e',
-        'client_secret':'7a708a4acb9545058b1c6cde1b19bc9f',
+        'client_id':'b45b91203a334848ae2a6895e695fb56',
+        'client_secret':'c53c8201ba8447f0b559e62ef142f310',
         'redirect_uri':'https://www.google.com'
     }
 ]

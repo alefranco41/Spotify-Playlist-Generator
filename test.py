@@ -1,4 +1,4 @@
-from step1 import csv_to_dict, compute_periods
+from step1 import csv_to_dict, compute_periods, compute_listening_history, compute_prefix_name
 from step2 import compute_listening_history_patterns
 import os
 
@@ -35,13 +35,16 @@ def compute_longest_history_pattern(listening_history_patterns):
     
     return (longest_pattern_day,longest_pattern_hour,longest_pattern)
 
-def main():
+
+def compute_all_data():
     with open("data/longest_patterns.txt", "w") as file:
         for listening_history_file in os.listdir(directory_name):
             listening_history_file_path = os.path.join(directory_name, listening_history_file)
             listening_history_file_data = csv_to_dict(listening_history_file_path)
             if listening_history_file_data:
-                periods = compute_periods(listening_history_file_data)
+                prefix_name = compute_prefix_name(listening_history_file)
+                periods = compute_periods(listening_history_file_data, prefix_name)
+                listening_history = compute_listening_history(periods, prefix_name)
                 listening_history_patterns = compute_listening_history_patterns(periods, "endTime")
                 longest_pattern = compute_longest_history_pattern(listening_history_patterns)
                 file.write(f"Listening history file: {listening_history_file}\n")
@@ -54,6 +57,3 @@ def main():
             else:
                 os.remove(listening_history_file_path)
 
-
-if __name__ == "__main__":
-    main()
