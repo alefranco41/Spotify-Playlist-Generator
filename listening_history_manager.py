@@ -6,38 +6,43 @@ import math
 import random
 import os
 
+
+current_hour = 10 #int(datetime.now().hour)
+current_day = "Saturday" #datetime.now().strftime("%A")
+
+
 if os.path.exists('.cache'):
     os.remove('.cache')
 
 #Spotify application credentials
 credentials_dicts = [
     {
-        'client_id':'88af6dfe58a24ae5afd36cd35cff978c',
-        'client_secret':'84202b1ec08442dea6899e16214d8242',
+        'client_id':'42342781a4a24920ad9e2bdc6fadf7d8',
+        'client_secret':'7cd3cea1117c44949230e0c5eae6f749',
         'redirect_uri':'https://www.google.com'
     },
 
     {
-        'client_id':'69dddf2b92de442ab9af0b8910c36b01',
-        'client_secret':'eb9d3663520446e99ca89ce0ca8da4ae',
+        'client_id':'b348fdbb04354b4d97043b3a5ccaf9bd',
+        'client_secret':'21c57025090542c69fc29b25a3ca2cf3',
         'redirect_uri':'https://www.google.com'
     },
 
     {
-        'client_id':'f95642ced4744ba89b32c0cb22629c0e',
-        'client_secret':'0e1db2d43493486c97acb6ad07db3a36',
+        'client_id':'39c7d018efbc44e2ba4c415b287b1869',
+        'client_secret':'80f021fbbc4043e394e41bb643f288bf',
         'redirect_uri':'https://www.google.com'
     },
 
     {
-        'client_id':'149c7e56cf274adcaf2e57da5641f84c',
-        'client_secret':'7ed5a6a8c6f449f099d3cc3cd62fba6c',
+        'client_id':'9cb9359fbbf54c40b3208420ceedfae2',
+        'client_secret':'fee1e4637dac446880a2594225fd36f5',
         'redirect_uri':'https://www.google.com'
     },
 
     {
-        'client_id':'b45b91203a334848ae2a6895e695fb56',
-        'client_secret':'c53c8201ba8447f0b559e62ef142f310',
+        'client_id':'2a27a902ccdc45cda1b07c80d3b76028',
+        'client_secret':'fbb746585a844fdd9108c2d37512bc68',
         'redirect_uri':'https://www.google.com'
     }
 ]

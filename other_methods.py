@@ -1,4 +1,4 @@
-from listening_history_manager import spotify
+from listening_history_manager import spotify, current_day
 from step1 import feature_names_to_remove, check_listening_history_file, compute_listening_history
 from step2 import compute_optimal_solution_indexes, retrieve_optimal_solution_songs, compute_best_history_patterns, compute_listening_history_patterns,retrieve_data, current_day
 from evaluation import retrieve_playlists
