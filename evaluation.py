@@ -50,7 +50,7 @@ def compute_segment_distance(generated_playlist_features, history_pattern_featur
     return sum
     
 
-def compute_playlist_pattern_distances(playlists, existing_results):
+def compute_playlist_pattern_distances(playlists):
     from step2 import get_features
     results = {}
     print("Results for the new generated playlists:\n")
@@ -68,9 +68,8 @@ def compute_playlist_pattern_distances(playlists, existing_results):
         else:
             results[playlist_data] = None
     
-    existing_results.update(results)
     with open("data/results.bin", "wb") as file:
-        pickle.dump(existing_results,file)
+        pickle.dump(results,file)
     
     print("The new generated playlists have been uploaded on 'data/results.bin'")
 
@@ -87,12 +86,9 @@ def generate_spreadsheet(results):
 
 def main():
     playlists = retrieve_playlists()
-    results = retrieve_results()
-    if results:
-        playlists = {key: playlists[key] for key in playlists if key not in results}
     
     if playlists:
-        compute_playlist_pattern_distances(playlists, results)
+        compute_playlist_pattern_distances(playlists)
     else:
         print("No new generated playlists found")
 

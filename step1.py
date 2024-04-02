@@ -26,7 +26,7 @@ file_names_to_keep = ["recently_played_songs.bin", "playlists.bin", "results.bin
 data_directory = "data"
 #in order to speed up the process (and avoid too much API requests) we only run the clusterings of the current period
 current_hour = int(datetime.now().hour)
-hours_to_generate_song_sets = [19]
+hours_to_generate_song_sets = [8]
 input_message = """If you own the file "StreamingHistory.json" obtained through Spotify's "Request data" feature, insert its path here, press ENTER otherwise: """
 #Spotify API intervals for audio features, needed for the song-set generation with spheric heuristic
 constraints = {
@@ -274,8 +274,7 @@ def compute_most_similar_song_sets(song_sets, periods, listening_habits):
     most_similar_song_set = {}
     for period_song_set, (algorithm_name, _) in most_similar.items():
         most_similar_song_set[period_song_set] = song_sets[period_song_set][algorithm_name]
-
-
+            
     return most_similar_song_set
 
 
@@ -428,7 +427,7 @@ def linear_heuristic(cluster, centroid, m, song_set):
             #Get recommendations from Spotify API based on seed track and target features
             #if we set limit to be greater than playlist_length, we ensure that our playlist doesn't have any duplicate songs
             tracks = [point[1]['id']]
-            recommendations = spotify.recommendations(seed_tracks=tracks, limit=playlist_length+1, kwargs=modified_song_data).get('tracks')
+            recommendations = spotify.recommendations(seed_tracks=tracks, limit=100, kwargs=modified_song_data).get('tracks')
             #Append recommended tracks to the list
             count = 0
             for track in recommendations:
@@ -479,7 +478,7 @@ def spheric_heuristic(cluster, centroid, m, song_set):
         
         #Get recommendations from Spotify API based on the nearest song and target features
         #if we set limit to be greater than playlist_length, we ensure that our playlist doesn't have any duplicate songs
-        recommendations = spotify.recommendations(seed_tracks=[nearest_song['id']], limit=playlist_length+1, kwargs=modified_song_data).get('tracks')
+        recommendations = spotify.recommendations(seed_tracks=[nearest_song['id']], limit=100, kwargs=modified_song_data).get('tracks')
         
         #Append recommended tracks to the list
         count = 0
@@ -509,6 +508,8 @@ def generate_clustering_song_sets(clusterings):
             for cluster_set, song_set, heuristic in [(K, kmlh_song_set, 'l'), (K, kmsh_song_set, 's'), (F, fpflh_song_set, 'l'), (F, fpfsh_song_set, 's')]:
                 for i, cluster in enumerate(cluster_set[0]):
                     m = playlist_length / (cluster_set[2] * 4)
+                    if int(m) != m:
+                        m = math.ceil(m)
                     if heuristic == 'l':
                         song_set.extend(linear_heuristic(cluster, cluster_set[1][i], m, song_set))
                     else:
@@ -532,6 +533,8 @@ def upload_most_similar_song_sets(most_similar_song_sets, prefix_name):
 
 
 def main():
+    if os.path.exists('data/prefix_name.tmp'):
+        os.remove('data/prefix_name.tmp')
     #try to retrieve the "StreamingHistory.json" file
     listening_history_file_data = []
     listening_history_file = input(input_message)
@@ -540,6 +543,8 @@ def main():
     
     if listening_history_file_data:
         prefix_name = compute_prefix_name(listening_history_file)
+        with open("data/prefix_name.tmp", "w") as file:
+            file.write(prefix_name)
     else:
         prefix_name = "normal_mode"
         print("Since a valid listening history file was not provided,\nthe software will try to generate a playlist by using the last 50 songs played through the Spotify API")

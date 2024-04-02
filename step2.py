@@ -1,44 +1,37 @@
 import pickle
 from step1 import feature_names_to_remove, check_listening_history_file, periods_suffix, most_similar_song_sets_suffix, data_directory
 from scipy.spatial.distance import euclidean #needed in the dynamic programming algorithm
-from listening_history_manager import spotify
+from listening_history_manager import spotify, current_day
 from datetime import timedelta #manage timestamps of songs in order to compute listening history patterns
 import random #choose a random listening history patterns
 import os
-from datetime import datetime
 
-current_day = datetime.now().strftime("%A")
 #global variables
 playlist_length = 48
 best_history_patterns_suffix = "_best_history_patterns.bin"
 
 #retrieve the 'periods' dictionary and the song sets generated in the first step
 def retrieve_data():
-    song_sets_file_path = ""
-    periods_file_path = ""
-
-    for file in os.listdir(data_directory):
-        if file.endswith(most_similar_song_sets_suffix):
-            song_sets_file_path = file
-        if file.endswith(periods_suffix):
-            periods_file_path = file
-            prefix_name = os.path.splitext(file)[0].split('_')[0]
-        
-        if song_sets_file_path and periods_file_path:
-            break
-
     song_sets = None
     periods = None
+    prefix_name = None
 
-    if song_sets_file_path and periods_file_path:
-        song_sets_file_path = os.path.join(data_directory, song_sets_file_path)
-        periods_file_path = os.path.join(data_directory, periods_file_path)
+    if os.path.exists('data/prefix_name.tmp'):
+        with open('data/prefix_name.tmp', "r") as file:
+            prefix_name = file.read()
+    
+    if prefix_name:
+        song_sets_file_path = os.path.join(data_directory, prefix_name + most_similar_song_sets_suffix)
+        periods_file_path = os.path.join(data_directory, prefix_name + periods_suffix)
+        
         with open(song_sets_file_path, "rb") as file:
             song_sets = pickle.load(file)
 
         with open(periods_file_path, "rb") as file:
             periods = pickle.load(file)
         print("Retrieved the listening history and the song sets generated from the previous step")
+    else:
+        print("You need to run 'step1.py' first")
 
     return song_sets, periods, prefix_name
 
@@ -54,6 +47,7 @@ def choose_pattern_with_random_probability(patterns_with_enough_songs, timestamp
         start_index = excess // 2
         end_index = start_index + playlist_length
         chosen_pattern = chosen_pattern[start_index:end_index]
+    
     return chosen_pattern
 
 #if, for a given day and a given hour, no listening history patterns are valid (i.e, if none of the patterns have length greater than playlist_length)
@@ -65,6 +59,12 @@ def overlap_patterns(today_period_patterns, timestamp_key):
         chosen_pattern.extend(pattern)
 
     chosen_pattern.sort(key=lambda x: x[timestamp_key].time())
+
+    if len(chosen_pattern) > playlist_length:
+        excess = len(chosen_pattern) - playlist_length
+        start_index = excess // 2
+        end_index = start_index + playlist_length
+        chosen_pattern = chosen_pattern[start_index:end_index]
 
     return chosen_pattern
 
@@ -229,14 +229,14 @@ def compute_optimal_solution_indexes(history_patterns, playlist_patterns):
     for period, playlist in playlist_patterns.items():
         if not history_patterns.get(period, None):
             continue
-
-
+        
         history_pattern = get_features(history_patterns[period])
         playlist = get_features(playlist)
 
         m = len(playlist)
         k = len(history_pattern)
 
+        
         if  k > m:
             history_pattern = history_pattern[0:m]
             k = m
