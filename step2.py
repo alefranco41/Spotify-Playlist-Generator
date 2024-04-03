@@ -1,40 +1,25 @@
 import pickle
-from step1 import feature_names_to_remove, check_listening_history_file, periods_suffix, most_similar_song_sets_suffix, data_directory
+from step1 import feature_names_to_remove, check_listening_history_file, data_directory, most_similar_song_sets_suffix
 from scipy.spatial.distance import euclidean #needed in the dynamic programming algorithm
 from listening_history_manager import spotify, current_day
 from datetime import timedelta #manage timestamps of songs in order to compute listening history patterns
 import random #choose a random listening history patterns
 import os
-
+import sys
 #global variables
 playlist_length = 48
 best_history_patterns_suffix = "_best_history_patterns.bin"
 
-#retrieve the 'periods' dictionary and the song sets generated in the first step
-def retrieve_data():
-    song_sets = None
-    periods = None
-    prefix_name = None
+def retrieve_most_similar_song_set(prefix_name, hour):
+    most_similar_song_sets_file_path = os.path.join(data_directory, prefix_name + most_similar_song_sets_suffix)
+    most_similar_song_sets = {}
+    try:
+        with open(most_similar_song_sets_file_path, "rb") as file:
+            most_similar_song_sets = pickle.load(file)
+    except FileNotFoundError:
+        pass
 
-    if os.path.exists('data/prefix_name.tmp'):
-        with open('data/prefix_name.tmp', "r") as file:
-            prefix_name = file.read()
-    
-    if prefix_name:
-        song_sets_file_path = os.path.join(data_directory, prefix_name + most_similar_song_sets_suffix)
-        periods_file_path = os.path.join(data_directory, prefix_name + periods_suffix)
-        
-        with open(song_sets_file_path, "rb") as file:
-            song_sets = pickle.load(file)
-
-        with open(periods_file_path, "rb") as file:
-            periods = pickle.load(file)
-        print("Retrieved the listening history and the song sets generated from the previous step")
-    else:
-        print("You need to run 'step1.py' first")
-
-    return song_sets, periods, prefix_name
-
+    return most_similar_song_sets
 
 #if, for a given day and a given hour, one or more listening history patterns are valid (i.e, if the pattern length is greater than playlist_length)
 #we choose a random pattern (with greater probability for newer ones) as input for the dynamic programming algorithm
@@ -126,8 +111,14 @@ def compute_best_history_patterns(periods, day_name, timestamp_key, prefix_name)
         if chosen_pattern:
             best_history_patterns[period] = chosen_pattern
     
-    with open(best_history_patterns_file_path,"wb") as file:
-        pickle.dump(best_history_patterns, file)
+    if not best_history_patterns:
+        print(f"Couldn't generate history patterns for day {day_name} and hour {list(periods.keys())}")
+        sys.exit()
+    else:
+        with open(best_history_patterns_file_path,"wb") as file:
+            pickle.dump(best_history_patterns, file)
+    
+    print("Generated history patterns")
     return best_history_patterns
 
 #given a timestamp (i.e a day and an hour in which songs have been played), we compute the list of the listening history patterns.
@@ -282,6 +273,12 @@ def compute_optimal_solution_indexes(history_patterns, playlist_patterns):
             vertices_period.insert(0, min_index)
         
         optimal_solutions_indexes[period] = (vertices_period,duplicate_indexes)
+    
+    if not optimal_solutions_indexes:
+        print(f"Couldn't run the dynamic programming algorithm for hours {list(playlist_patterns.keys())}")
+        sys.exit()
+    
+    print(f"Computed the optimal ordering of the song-sets produced for hours {list(playlist_patterns.keys())}")
     return optimal_solutions_indexes
 
 
@@ -300,6 +297,7 @@ def retrieve_optimal_solution_songs(optimal_solutions_indexes, playlist_patterns
 
             playlist = [songs[index]['id'] for index in vertices_period]
             
+            print(f"Removing duplicate indexes from the optimal song ordering for period: {period}...")
             for i in range(playlist_length):
                 if duplicate_indexes[i]:
                     recommendations = spotify.recommendations(seed_tracks=[playlist[i]], limit=limit).get('tracks')
@@ -311,6 +309,9 @@ def retrieve_optimal_solution_songs(optimal_solutions_indexes, playlist_patterns
             print(f"Optimal song ordering for period {period}: {playlist}")
             playlists[period] = playlist
 
+    if not playlists:
+        print(f"Couldn't retrieve the optimal solution songs for hours {list(playlist_patterns.keys())}")
+        sys.exit()
     return playlists
 
 
@@ -349,30 +350,3 @@ def get_timestamp_key(periods):
         timestamp_key = 'played_at'
     return timestamp_key
 
-def main():
-    #retrieve data generated in the previous step
-    song_sets, periods, prefix_name = retrieve_data() 
-    #day name used to compute the listening history patterns
-    day_name =  current_day
-
-    if song_sets and periods:
-        timestamp_key = get_timestamp_key(periods)
-        
-        best_history_patterns = compute_best_history_patterns(periods, day_name, timestamp_key, prefix_name)
-
-        if best_history_patterns:
-            #apply the dynamic programming algorithm to the best listening history patterns and the song sets
-            optimal_solutions_indexes = compute_optimal_solution_indexes(best_history_patterns, song_sets)
-            #retrieve the ids of the songs in the playlists generated
-            final_playlists = retrieve_optimal_solution_songs(optimal_solutions_indexes, song_sets)
-            final_playlists = create_playlists_dict(final_playlists, day_name, best_history_patterns, prefix_name)
-            #use the ids to upload the generated playlists on Spotify
-            #create_playlists(final_playlists)
-        else:
-            print(f"No history patterns found for periods {[key for key in song_sets.keys()]} on day {day_name}")
-            print(f"You can try changing the variable 'day_name' to another day, or you might want to rerun 'step1.py' with different periods as input")
-            print(f"You can also try reducing the value of the global variable 'playlist length'")
-    else:
-        print("No song sets retrieved from step 1")
-if __name__ == '__main__':
-    main()

@@ -7,7 +7,7 @@ from tzlocal import get_localzone #get current time zone
 import pytz #convert Spotify's time zone to the current one
 import csv #retrieve data from the "StreamingHistory.json" file
 import os
-
+import sys
 #modules for clustering
 from sklearn.preprocessing import StandardScaler 
 from sklearn.metrics import davies_bouldin_score
@@ -73,6 +73,7 @@ def csv_to_dict(csv_file):
     else:
         if data:
             data = filter_listening_history_file(data)
+            print(f"Succesfully filtered the listening history: {csv_file}")
     return data
 
 
@@ -147,10 +148,16 @@ def compute_periods(listening_history_file_data, prefix_name):
         
         periods[timestamp].append(track_item)
     
-    with open(periods_file_path, "wb") as file:
+    
+
+    if not periods:
+        print("Couldn't retrieve or compute periods")
+        sys.exit()
+    else:
+        with open(periods_file_path, "wb") as file:
             pickle.dump(periods, file)
     print("Computed periods")
-
+    
     return periods
 
 #compute the track ids needed to get the audio features through the Spotify API
@@ -198,10 +205,16 @@ def compute_listening_history(periods, prefix_name):
                     final_features = dict(filter(lambda item: item[0] not in feature_names_to_remove, feature.items()))
                     listening_history[hour].append(final_features)
 
-        
-    with open(listening_history_file_path, "wb") as file:
-            pickle.dump(listening_history, file)
-    print("Computed listening history ")
+    
+    if not listening_history:
+        print("Couldn't compute or retrieve the listening history")
+        sys.exit()
+    else:
+        with open(listening_history_file_path, "wb") as file:
+                pickle.dump(listening_history, file)
+        print("Computed listening history ")
+
+    
     return listening_history
 
 #pair (NTNA, NTKA) representing the user listening habits for every period in the listening history
@@ -223,7 +236,15 @@ def compute_listening_habits(periods):
         if h > 0:
             NTNA = 100 * dNTNA / h
             NTKA = 100 * dNTKA / h
-            Ph[hour] = (NTNA,NTKA)
+            if NTNA and NTKA:
+                Ph[hour] = (NTNA,NTKA)
+
+    if not Ph:
+        print("Couldn't compute the listening habits")
+        sys.exit()
+    else:
+        print("Computed listening habits ")
+
     return Ph
 
 
@@ -260,6 +281,7 @@ def compute_most_similar_song_sets(song_sets, periods, listening_habits):
 
         Ph[period_song_set] = Ph_songsets
 
+
     most_similar = {}
 
     #use the euclidean distance in order to pick, for each period, the generated song set that is most similar to the user listening habits
@@ -274,7 +296,12 @@ def compute_most_similar_song_sets(song_sets, periods, listening_habits):
     most_similar_song_set = {}
     for period_song_set, (algorithm_name, _) in most_similar.items():
         most_similar_song_set[period_song_set] = song_sets[period_song_set][algorithm_name]
-            
+    
+    if not most_similar_song_set:
+        print(f"Couldn't compute most similar song-set for periods {[item[0] for item in list(most_similar.items())]}")
+        sys.exit()
+    
+    print(f"Computed most similar song-set for periods {[item[0] for item in list(most_similar.items())]}")
     return most_similar_song_set
 
 
@@ -398,6 +425,11 @@ def compute_clusterings(periods_listening_history):
                 print(f"Generated {method} clustering for period {period}")
             else:
                 print(f"Couldn't generate {method} clustering for period {period}")
+    
+    if not clusterings:
+        print(f"Couldn't compute clusterings for hours {list(periods_listening_history.keys())}")
+        sys.exit()
+    
     return clusterings
 
 
@@ -427,6 +459,7 @@ def linear_heuristic(cluster, centroid, m, song_set):
             #Get recommendations from Spotify API based on seed track and target features
             #if we set limit to be greater than playlist_length, we ensure that our playlist doesn't have any duplicate songs
             tracks = [point[1]['id']]
+            print(f"Getting recommendations with linear heuristic for cluster #{i}...")
             recommendations = spotify.recommendations(seed_tracks=tracks, limit=100, kwargs=modified_song_data).get('tracks')
             #Append recommended tracks to the list
             count = 0
@@ -449,7 +482,7 @@ def spheric_heuristic(cluster, centroid, m, song_set):
     f = 12
 
     #Generate random directions in the feature space and recommend tracks
-    for _ in range(4):
+    for i in range(4):
         direction = np.random.randn(f)
         direction /= np.linalg.norm(direction)
         
@@ -478,6 +511,7 @@ def spheric_heuristic(cluster, centroid, m, song_set):
         
         #Get recommendations from Spotify API based on the nearest song and target features
         #if we set limit to be greater than playlist_length, we ensure that our playlist doesn't have any duplicate songs
+        print(f"Getting recommendations with spheric heuristic for cluster #{i}...")
         recommendations = spotify.recommendations(seed_tracks=[nearest_song['id']], limit=100, kwargs=modified_song_data).get('tracks')
         
         #Append recommended tracks to the list
@@ -510,13 +544,17 @@ def generate_clustering_song_sets(clusterings):
                     m = playlist_length / (cluster_set[2] * 4)
                     if int(m) != m:
                         m = math.ceil(m)
+                    print(f"m = {m}, number of clusters: {cluster_set[2]}")
                     if heuristic == 'l':
+                        print(f"Generating song set #{n} for period {period}...")
                         song_set.extend(linear_heuristic(cluster, cluster_set[1][i], m, song_set))
                     else:
                         song_set.extend(spheric_heuristic(cluster, cluster_set[1][i], m, song_set))
                 print(f"Generated song set #{n} for period {period}")
                 n += 1
             song_sets[period] = {'kmlh': kmlh_song_set, 'kmsh': kmsh_song_set, 'fpflh': fpflh_song_set, 'fpfsh': fpfsh_song_set}
+    if not song_sets:
+        print(f"Couldn't generate song-sets for periods {list(clustering.keys())}")
     return song_sets
 
 def upload_most_similar_song_sets(most_similar_song_sets, prefix_name):
@@ -530,57 +568,3 @@ def upload_most_similar_song_sets(most_similar_song_sets, prefix_name):
     with open(most_similar_song_sets_file_path, "wb") as file:
         pickle.dump(most_similar_song_sets, file)
     print("Song sets uploaded")      
-
-
-def main():
-    if os.path.exists('data/prefix_name.tmp'):
-        os.remove('data/prefix_name.tmp')
-    #try to retrieve the "StreamingHistory.json" file
-    listening_history_file_data = []
-    listening_history_file = input(input_message)
-    if listening_history_file:
-        listening_history_file_data = csv_to_dict(listening_history_file)
-    
-    if listening_history_file_data:
-        prefix_name = compute_prefix_name(listening_history_file)
-        with open("data/prefix_name.tmp", "w") as file:
-            file.write(prefix_name)
-    else:
-        prefix_name = "normal_mode"
-        print("Since a valid listening history file was not provided,\nthe software will try to generate a playlist by using the last 50 songs played through the Spotify API")
-
-    #compute periods based on the playing timestamp of every song
-    periods = compute_periods(listening_history_file_data, prefix_name)
-    #use the Spotify API to retrieve the audio features of the tracks in the listening history
-    #store the listening history (filtered by periods) in a dictionary
-    listening_history = compute_listening_history(periods, prefix_name)
-    #compute the listening habits
-    listening_habits = compute_listening_habits(periods)
-    print("Computed listening habits ")
-    #pair (NTNA,NTKA) of the selected periods
-    listening_habits_periods = {period:listening_habits.get(period, None) for period in hours_to_generate_song_sets}
-
-    if listening_habits_periods and any(value is not None for value in listening_habits_periods.values()): 
-        #listening history of the selected periods
-        listening_history_filtered = {period:songs for period, songs in listening_history.items() if period in hours_to_generate_song_sets}
-        if listening_history_filtered and any(len(value) != 0 for value in listening_history_filtered.values()):
-            #run the clusterings
-            clusterings = compute_clusterings(listening_history_filtered)
-            if any(clusterings.values()):
-                #generate the song sets
-                clustering_song_sets = generate_clustering_song_sets(clusterings)
-                #among the song sets generated, choose the most similar to the pair (NTNA,NTKA)
-                
-                most_similar_song_sets = compute_most_similar_song_sets(clustering_song_sets, periods, listening_habits_periods)
-
-                if most_similar_song_sets:
-                    upload_most_similar_song_sets(most_similar_song_sets, prefix_name)
-            else:
-                 print(f"No valid clusterings produced for periods {hours_to_generate_song_sets}, you might want to try different periods by changing the variable 'hours_to_generate_song_sets'")
-        else:
-            print(f"No listening history detected for periods {hours_to_generate_song_sets}, you might want to try different periods by changing the variable 'hours_to_generate_song_sets'")
-    else:
-        print(f"No habits detected for periods {hours_to_generate_song_sets}, you might want to try different periods by changing the variable 'hours_to_generate_song_sets'")
-
-if __name__ == "__main__":
-    main()

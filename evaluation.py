@@ -53,7 +53,7 @@ def compute_segment_distance(generated_playlist_features, history_pattern_featur
 def compute_playlist_pattern_distances(playlists):
     from step2 import get_features
     results = {}
-    print("Results for the new generated playlists:\n")
+    print("Results for the generated playlists:\n")
     i = 1
     for playlist_data, (generated_playlist, history_pattern) in playlists.items():
         if len(generated_playlist) == len(history_pattern):
@@ -67,6 +67,7 @@ def compute_playlist_pattern_distances(playlists):
             i += 1
         else:
             results[playlist_data] = None
+            print(f"Couldn't compute Pattern Distance for playlist {playlist_data}:  its length ({len(generated_playlist)}) differs from the length ({len(history_pattern)}) of the corresponding history pattern\n")
     
     with open("data/results.bin", "wb") as file:
         pickle.dump(results,file)
