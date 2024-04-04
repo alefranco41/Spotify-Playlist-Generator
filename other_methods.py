@@ -1,6 +1,5 @@
-from listening_history_manager import spotify, current_day
 from step1 import feature_names_to_remove, check_listening_history_file
-from step2 import compute_optimal_solution_indexes, retrieve_optimal_solution_songs, compute_best_history_patterns, compute_listening_history_patterns, current_day
+from step2 import compute_optimal_solution_indexes, retrieve_optimal_solution_songs, compute_best_history_patterns, compute_listening_history_patterns
 from evaluation import retrieve_playlists
 import math
 import pickle
@@ -8,7 +7,7 @@ import pickle
 
 #Each song of the user’s listening history is used as input to the Spotify recommender
 #system to get a similar song. Notice that since this playlist is generated song-by-song, no song-set is produced
-def get_rec_1_recommendations(listening_history,prefix_name,day_name):
+def get_rec_1_recommendations(listening_history,prefix_name,day_name, spotify):
     print("Generating REC-1 playlists...")
     playlists = {}
     for period, songs in listening_history.items():
@@ -33,7 +32,7 @@ def get_rec_1_recommendations(listening_history,prefix_name,day_name):
 #user’s listening history (the current, the previous and the next) are used as input of the
 #Spotify recommender system to get a similar song. Again, since the playlist is generated
 #song-by-song, no song-set is produced
-def get_rec_2_recommendations(listening_history,prefix_name, day_name):
+def get_rec_2_recommendations(listening_history,prefix_name, day_name, spotify):
     playlists = {}
     print("Generating REC-2 playlists...")
     for period, songs in listening_history.items():
@@ -69,7 +68,7 @@ def get_rec_2_recommendations(listening_history,prefix_name, day_name):
 #we split the listening history in blocks composed of five consecutive songs. Then, for each
 #block, the recommender is asked to return a number of songs so as to have a song-set of the
 #same size as that of the dynamic programming method.
-def get_hyb_1_recommendations(listening_history, periods, prefix_name, day_name):
+def get_hyb_1_recommendations(listening_history, periods, prefix_name, day_name, spotify):
     playlists = {}
     print("Generating HYB-1 playlists...")
     for period, songs in listening_history.items():
@@ -115,14 +114,14 @@ def get_hyb_1_recommendations(listening_history, periods, prefix_name, day_name)
     
 
     history_patterns = compute_listening_history_patterns(periods, timestamp_key)
-    best_history_patterns = compute_best_history_patterns(history_patterns, current_day, timestamp_key, prefix_name)
-    ordered_playlists_indexes = compute_optimal_solution_indexes(best_history_patterns, playlist_patterns)
-    ordered_playlists = retrieve_optimal_solution_songs(ordered_playlists_indexes, playlist_patterns)
+    best_history_patterns = compute_best_history_patterns(history_patterns, day_name, timestamp_key, prefix_name)
+    ordered_playlists_indexes = compute_optimal_solution_indexes(best_history_patterns, playlist_patterns, spotify)
+    ordered_playlists = retrieve_optimal_solution_songs(ordered_playlists_indexes, playlist_patterns, spotify)
 
     print("HYB-1 playlists generated")
     return ordered_playlists, best_history_patterns
 
-def create_playlists_dict(playlists_rec_1, playlists_rec_2, playlists_hyb_1, history_patterns, prefix_name):
+def create_playlists_dict(playlists_rec_1, playlists_rec_2, playlists_hyb_1, history_patterns, prefix_name, current_day):
     playlists = {}
 
     if not playlists_rec_1:

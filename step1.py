@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta #manage timestamps of songs
 import math
 import pickle
-from listening_history_manager import compute_recently_played_songs, spotify, filter_listening_history_file
+from listening_history_manager import compute_recently_played_songs, filter_listening_history_file
 from tzlocal import get_localzone #get current time zone
 import pytz #convert Spotify's time zone to the current one
 import csv #retrieve data from the "StreamingHistory.json" file
@@ -25,8 +25,6 @@ periods_suffix = "_periods.bin"
 file_names_to_keep = ["recently_played_songs.bin", "playlists.bin", "results.bin"]
 data_directory = "data"
 #in order to speed up the process (and avoid too much API requests) we only run the clusterings of the current period
-current_hour = int(datetime.now().hour)
-hours_to_generate_song_sets = [8]
 input_message = """If you own the file "StreamingHistory.json" obtained through Spotify's "Request data" feature, insert its path here, press ENTER otherwise: """
 #Spotify API intervals for audio features, needed for the song-set generation with spheric heuristic
 constraints = {
@@ -114,7 +112,7 @@ def compute_dNTNA_dNTKA(current_period, periods):
 
 #dictionary that maps a period to the list of tracks played in that period
 #a period is identified by the day (year/month/day) and the hour in which some tracks in the listening history have been played
-def compute_periods(listening_history_file_data, prefix_name):
+def compute_periods(listening_history_file_data, prefix_name, spotify):
     periods = {}
     periods_file_path = os.path.join(data_directory, prefix_name + periods_suffix)
 
@@ -131,7 +129,7 @@ def compute_periods(listening_history_file_data, prefix_name):
     if listening_history_file_data:
         songs = listening_history_file_data
     else:
-        songs = compute_recently_played_songs()
+        songs = compute_recently_played_songs(spotify)
 
     for track_item in songs:
         if listening_history_file_data:
@@ -177,7 +175,7 @@ def compute_track_ids(period, tracks):
     return track_ids
 
 #dictionary that maps a period (hour) to a list of (filtered) features dictionaries, one for every track in that period
-def compute_listening_history(periods, prefix_name):
+def compute_listening_history(periods, prefix_name, spotify):
     listening_history = {}
     listening_history_file_path = os.path.join(data_directory, prefix_name + listening_history_suffix)
 
@@ -435,7 +433,7 @@ def compute_clusterings(periods_listening_history):
 
 
 #linear heuristic for recommending tracks based on a given cluster and its centroid
-def linear_heuristic(cluster, centroid, m, song_set):  
+def linear_heuristic(cluster, centroid, m, song_set, spotify):  
     #Calculate Euclidean distances between each song in the cluster and the centroid
     distances = [distance.euclidean([value for value in song.values() if not isinstance(value,str)], [value for value in centroid.values() if not isinstance(value,str)]) for song in cluster]
     
@@ -473,7 +471,7 @@ def linear_heuristic(cluster, centroid, m, song_set):
 
 
 #spheric heuristic for recommending tracks based on a given cluster and its centroid
-def spheric_heuristic(cluster, centroid, m, song_set):
+def spheric_heuristic(cluster, centroid, m, song_set, spotify):
     recommended_tracks = []
     
     #Calculate Euclidean distances between each song in the cluster and the centroid
@@ -528,7 +526,7 @@ def spheric_heuristic(cluster, centroid, m, song_set):
 
 
 #use the two heuristics to generate, for each period, four different song sets 
-def generate_clustering_song_sets(clusterings):
+def generate_clustering_song_sets(clusterings, spotify):
     song_sets = {}
     for period, clustering in clusterings.items():
         clustering_kmeans = clustering.get('kmeans', None)
@@ -547,9 +545,9 @@ def generate_clustering_song_sets(clusterings):
                     print(f"m = {m}, number of clusters: {cluster_set[2]}")
                     if heuristic == 'l':
                         print(f"Generating song set #{n} for period {period}...")
-                        song_set.extend(linear_heuristic(cluster, cluster_set[1][i], m, song_set))
+                        song_set.extend(linear_heuristic(cluster, cluster_set[1][i], m, song_set, spotify))
                     else:
-                        song_set.extend(spheric_heuristic(cluster, cluster_set[1][i], m, song_set))
+                        song_set.extend(spheric_heuristic(cluster, cluster_set[1][i], m, song_set, spotify))
                 print(f"Generated song set #{n} for period {period}")
                 n += 1
             song_sets[period] = {'kmlh': kmlh_song_set, 'kmsh': kmsh_song_set, 'fpflh': fpflh_song_set, 'fpfsh': fpfsh_song_set}
