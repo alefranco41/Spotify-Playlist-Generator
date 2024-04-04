@@ -8,6 +8,7 @@ import pytz #convert Spotify's time zone to the current one
 import csv #retrieve data from the "StreamingHistory.json" file
 import os
 import sys
+import random
 #modules for clustering
 from sklearn.preprocessing import StandardScaler 
 from sklearn.metrics import davies_bouldin_score
@@ -234,8 +235,7 @@ def compute_listening_habits(periods):
         if h > 0:
             NTNA = 100 * dNTNA / h
             NTKA = 100 * dNTKA / h
-            if NTNA and NTKA:
-                Ph[hour] = (NTNA,NTKA)
+            Ph[hour] = (NTNA,NTKA)
 
     if not Ph:
         print("Couldn't compute the listening habits")
@@ -457,7 +457,7 @@ def linear_heuristic(cluster, centroid, m, song_set, spotify):
             #Get recommendations from Spotify API based on seed track and target features
             #if we set limit to be greater than playlist_length, we ensure that our playlist doesn't have any duplicate songs
             tracks = [point[1]['id']]
-            print(f"Getting recommendations with linear heuristic for cluster #{i}...")
+            print(f"Getting recommendations with linear heuristic for track '{tracks[0]}' of point #{i}...")
             recommendations = spotify.recommendations(seed_tracks=tracks, limit=100, kwargs=modified_song_data).get('tracks')
             #Append recommended tracks to the list
             count = 0
@@ -474,19 +474,13 @@ def linear_heuristic(cluster, centroid, m, song_set, spotify):
 def spheric_heuristic(cluster, centroid, m, song_set, spotify):
     recommended_tracks = []
     
-    #Calculate Euclidean distances between each song in the cluster and the centroid
-    distances = [distance.euclidean([value for value in song.values() if not isinstance(value,str)], [value for value in centroid.values() if not isinstance(value,str)]) for song in cluster]
-    max_distance = max(distances)
-    f = 12
+    random_songs = random.sample(cluster, 4)
 
     #Generate random directions in the feature space and recommend tracks
-    for i in range(4):
-        direction = np.random.randn(f)
-        direction /= np.linalg.norm(direction)
-        
+    for i, song in enumerate(random_songs):
         #Generate a random point in the direction of the vector from the centroid
-        random_point = {key: centroid[key] + direction[i] * max_distance for i, key in enumerate(centroid) if key != 'id'}
-        modified_song_data = {'target_' + key: value for key, value in random_point.items()}
+        modified_song_data = {'target_' + key: value for key, value in song.items() if key != 'id'}
+
         
         #Clip the values of the random point to ensure they are within the specified constraints
         for key,value in modified_song_data.items():
@@ -509,7 +503,7 @@ def spheric_heuristic(cluster, centroid, m, song_set, spotify):
         
         #Get recommendations from Spotify API based on the nearest song and target features
         #if we set limit to be greater than playlist_length, we ensure that our playlist doesn't have any duplicate songs
-        print(f"Getting recommendations with spheric heuristic for cluster #{i}...")
+        print(f"Getting recommendations for track '{nearest_song['id']}' with spheric heuristic for point #{i}...")
         recommendations = spotify.recommendations(seed_tracks=[nearest_song['id']], limit=100, kwargs=modified_song_data).get('tracks')
         
         #Append recommended tracks to the list
@@ -563,6 +557,17 @@ def upload_most_similar_song_sets(most_similar_song_sets, prefix_name):
         print("\n")
     
     most_similar_song_sets_file_path = os.path.join(data_directory, prefix_name + most_similar_song_sets_suffix)
+    
+    already_stored_song_sets = {}
+    try:
+        with open(most_similar_song_sets_file_path, "rb") as file:
+            already_stored_song_sets = pickle.load(file)
+    except Exception:
+        pass
+
+    already_stored_song_sets.update(most_similar_song_sets)
+    
     with open(most_similar_song_sets_file_path, "wb") as file:
-        pickle.dump(most_similar_song_sets, file)
+            pickle.dump(already_stored_song_sets, file)
+
     print("Song sets uploaded")      

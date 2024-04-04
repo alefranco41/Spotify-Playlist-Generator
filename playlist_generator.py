@@ -4,9 +4,9 @@ import other_methods
 import listening_history_manager
 import evaluation
 import sys
-
-current_hour = 15 #int(datetime.now().hour)
-current_day = "Tuesday" #datetime.now().strftime("%A")
+from datetime import datetime
+current_hour = int(datetime.now().hour)
+current_day =  datetime.now().strftime("%A")
 
 
 def experimental_phase(ans, prefix_name, current_hour_listening_history, periods, our_method_playlists, spotify):
