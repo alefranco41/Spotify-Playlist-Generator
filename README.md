@@ -3,13 +3,12 @@ An automated method to generate highly personalized playlists
 
 Installation Instructions:
 1) Install the requirements listed in 'requirements.txt' (pip install -r requirements.txt)
-2) Register your account to the Spotify Developer Dashboard at the link https://developer.spotify.com/dashboard.
-  a) if you haven't already done so, you will need to verify the email associated to your Spotify account.
-  b) after you have verified the email,  wait about five minutes: Spotify takes time to register your account to the Developer Dashboard.
-3) Go to https://developer.spotify.com/dashboard and create an application 
-4) For every application that you create, you have to insert the credentials 'client_id', 'client_secret' and 'redirect_uri' in the dictionary 'credentials_dicts' inside the module 'listening_history_manager.py'
-5) Every time you try to run a module, a link will be prompted to you. Paste the link into a browser, login to Spotify, copy the URL you were redirected to, and paste it back into the program 
-6) Run 'step1.py'
-7) Run 'step2.py'
+2) Register one or more Spotify accounts to the Spotify Developer Dashboard at the link https://developer.spotify.com/dashboard.
+  a) if you haven't already done so, you will need to verify the email associated to your Spotify accounts.
+  b) after you have verified the email,  wait about five minutes: Spotify takes time to register your accounts to the Developer Dashboard.
+3) Go to https://developer.spotify.com/dashboard and create up to five application for each Spotify account.
+4) For every application that you create, you have to insert the credentials 'client_id', 'client_secret' and 'redirect_uri' in the dictionary 'credentials_dicts' inside the module 'listening_history_manager'. Each key of 'credentials_dicts' is the email associated to a Spotify account, and each value is a list of (up to five) application credentials associated to that account. The more applications you create, the lower will be the chances of reaching the API request limit imposed by Spofify. Indeed, every time the software is used, the credentials of a random application are chosen. 
+5) (optional) you can change the variables 'current_day' and 'current_hour' inside the module 'playlist_generator' in order to generate a playlist for a different time of the day.
+6) (optional) you can comment the line 79 of the module 'playlist_generator' to generate (and upload on Spotify) only the playlist generated with our method.
+7) Run the module 'playlist_generator'.
 
-For experimental purposes you can also run 'other_methods.py' and 'evaluation.py'
