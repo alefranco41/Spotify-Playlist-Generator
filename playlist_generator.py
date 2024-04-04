@@ -9,7 +9,7 @@ current_hour = 15 #int(datetime.now().hour)
 current_day = "Tuesday" #datetime.now().strftime("%A")
 
 
-def experimental_phase(ans, prefix_name, current_hour_listening_history, periods, our_method_playlists):
+def experimental_phase(ans, prefix_name, current_hour_listening_history, periods, our_method_playlists, spotify):
     if ans != 'y':
         spotify = listening_history_manager.change_credentials()
 
@@ -76,7 +76,7 @@ def main():
     step2.create_playlists(our_method_playlists, spotify)
 
     #other methods
-    experimental_phase(ans, prefix_name, current_hour_listening_history, periods, our_method_playlists)
+    experimental_phase(ans, prefix_name, current_hour_listening_history, periods, our_method_playlists, spotify)
 
         
 if __name__ == "__main__":
