@@ -17,8 +17,11 @@ def retrieve_most_similar_song_set(prefix_name, hour):
             most_similar_song_sets = pickle.load(file)
     except FileNotFoundError:
         pass
-
-    return most_similar_song_sets
+    
+    if most_similar_song_sets.get(hour, None):
+        return {hour:most_similar_song_sets[hour]}
+    
+    return None
 
 #if, for a given day and a given hour, one or more listening history patterns are valid (i.e, if the pattern length is greater than playlist_length)
 #we choose a random pattern (with greater probability for newer ones) as input for the dynamic programming algorithm
@@ -298,8 +301,16 @@ def retrieve_optimal_solution_songs(optimal_solutions_indexes, playlist_patterns
             
             print(f"Removing duplicate indexes from the optimal song ordering for period: {period}...")
             for i in range(playlist_length):
+                if i == 0 or i == 1: 
+                    track_ids = playlist[0:min(5, len(playlist))]
+                elif i == len(playlist) - 1 or i == len(playlist) - 2: 
+                    track_ids = playlist[max(0, len(playlist) - 5):]
+                else:
+                    track_ids = [playlist[max(0, i-2)], playlist[max(0, i-1)], playlist[i], playlist[min(len(playlist) - 1, i+1)], playlist[min(len(playlist) - 1, i+2)]]
+
                 if duplicate_indexes[i]:
-                    recommendations = spotify.recommendations(seed_tracks=[playlist[i]], limit=limit).get('tracks')
+                    print(f"Getting recommendation for duplicate track '{[playlist[i]]}'")
+                    recommendations = spotify.recommendations(seed_tracks=track_ids, limit=limit).get('tracks')
                     for recommendation in recommendations:
                         if recommendation['id'] not in playlist:
                             playlist[i] = recommendation['id']
@@ -338,7 +349,7 @@ def create_playlists(playlists, spotify):
         playlist = spotify.user_playlist_create(user_id, playlist_name, public=False)
         spotify.playlist_add_items(playlist['id'], tracks[0])
         
-        print(f"Uploaded on Spotify the playlist for period: {playlist_data[0]} at {playlist_data[1]}:00, generated with method: {method_name}")
+        print(f"Uploaded on Spotify the playlist for {playlist_data[1]} at {playlist_data[2]}:00, generated with method {method_name} for the listening history {playlist_data[0]}")
 
 def get_timestamp_key(periods):
     #check if the module 'step1' is running with a "StreamingHistory.json" file provided by the user or not.

@@ -2,6 +2,7 @@ import pickle
 from scipy.spatial.distance import euclidean
 import pandas as pd
 from listening_history_manager import change_credentials
+import matplotlib.pyplot as plt
 
 def retrieve_playlists():
     playlists = {}
@@ -74,16 +75,34 @@ def compute_playlist_pattern_distances(playlists, spotify):
     
     print("The new generated playlists have been uploaded on 'data/results.bin'")
 
+import pandas as pd
+import matplotlib.pyplot as plt
+
 def generate_spreadsheet(results):
     data = []
     for key, value in results.items():
         LH_filename, day, hour, method = key
         if value:
-            df = data.append({'LH_filename': LH_filename, 'Day': day, 'Hour': hour, 'Method': method, 'Playlist_Length': value[1], 'Pattern_Distance': value[0]})
+            data.append({'LH_filename': LH_filename, 'Day': day, 'Hour': hour, 'Method': method, 'Playlist_Length': value[1], 'Pattern_Distance': value[0]})
     
     df = pd.DataFrame(data)
     df.to_excel("playlists_results.xlsx", index=False)
     print("Spreadsheet generated: playlist_results.xlsx")
+    
+    #average Pattern Distance grouped by LH_filename and Method
+    grouped_df = df.groupby(['LH_filename', 'Method'])['Pattern_Distance'].mean().unstack()
+
+    #create historgam
+    grouped_df.plot(kind='bar', figsize=(10, 6))
+    plt.title('Media di Pattern Distance per LH_filename e Method')
+    plt.xlabel('LH_filename')
+    plt.ylabel('Media di Pattern Distance')
+    plt.xticks(rotation=45, ha='right')
+    plt.tight_layout()
+
+    #save graph as PNG
+    plt.savefig('avg_PD_method.png')
+
 
 def main():
     playlists = retrieve_playlists()

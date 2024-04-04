@@ -17,6 +17,7 @@ def get_rec_1_recommendations(listening_history,prefix_name,day_name, spotify):
         if generated_playlist:
             playlist_length = len(generated_playlist[0])
         for song in songs:
+            print(f"Getting REC-1 recommendation for song '{song['id']}'")
             recommendation = spotify.recommendations(seed_tracks=[song['id']], limit=1).get('tracks')[0]
             if recommendation['id'] not in list(set(playlist)):
                 playlist.append(recommendation['id'])
@@ -48,7 +49,7 @@ def get_rec_2_recommendations(listening_history,prefix_name, day_name, spotify):
                 track_ids = [songs[i - 1], song]
             else:
                 track_ids = [songs[i - 1], song, songs[i + 1]]
-        
+            print(f"Getting REC-2 recommendation for songs {[track['id'] for track in track_ids]}")
             recommendation = spotify.recommendations(seed_tracks=[track['id'] for track in track_ids], limit=1).get('tracks')[0]
             if recommendation['id'] not in list(set(playlist)):
                 playlist.append(recommendation['id'])
@@ -87,6 +88,7 @@ def get_hyb_1_recommendations(listening_history, periods, prefix_name, day_name,
             if length:
                 playlists[period] = playlist
                 break
+            print(f"Getting HYB-1 recommendations for songs {[track['id'] for track in block]}")
             recommendations = spotify.recommendations(seed_tracks=[track['id'] for track in block], limit=playlist_length).get('tracks')
             for recommendation in recommendations:
                 count = 0
