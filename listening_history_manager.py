@@ -5,10 +5,7 @@ from datetime import datetime
 import math
 import random
 import os
-
-def delete_cache():
-    if os.path.exists('.cache'):
-        os.remove('.cache')
+from custom_cache_handler import CustomCacheFileHandler
 
 def compute_recently_played_songs(spotify):
     #try to load the accumulated listening history (spotify API only allows to retrieve the last 50 songs of the listening history)
@@ -425,10 +422,14 @@ credentials_dicts = {
 
 
 def change_credentials():
-    delete_cache()
     random_account, random_account_credentials = random.choice(list(credentials_dicts.items()))
     random_credentials = random.choice(random_account_credentials)
-    #interact with the spotify API
-    spotify = spotipy.Spotify(auth_manager=SpotifyOAuth(**random_credentials, scope="playlist-modify-private user-read-recently-played"))
+    account_index = list(credentials_dicts.keys()).index(random_account)
+    credentials_index = random_account_credentials.index(random_credentials)
+    credentials_index_complete = account_index * len(random_account_credentials) + credentials_index
+    custom_cache_handler = CustomCacheFileHandler(credentials_index=credentials_index_complete)
+    spotify = spotipy.Spotify(auth_manager=SpotifyOAuth(**random_credentials, scope="playlist-modify-private user-read-recently-played", cache_handler=custom_cache_handler))
     print(f"ACCOUNT EMAIL: {random_account}")
+    
     return spotify
+

@@ -5,8 +5,8 @@ import listening_history_manager
 import evaluation
 import sys
 from datetime import datetime
-current_hour = int(datetime.now().hour)
-current_day =  datetime.now().strftime("%A")
+current_hour = 9 #int(datetime.now().hour)
+current_day =  "Wednesday" #datetime.now().strftime("%A")
 
 
 def experimental_phase(ans, prefix_name, current_hour_listening_history, periods, our_method_playlists, spotify):
@@ -28,7 +28,8 @@ def experimental_phase(ans, prefix_name, current_hour_listening_history, periods
 def main():
     spotify = listening_history_manager.change_credentials()
     listening_history_file_data = []
-    listening_history_file = input(step1.input_message)
+    #listening_history_file = input(step1.input_message)
+    listening_history_file = "listening_histories/LH1.csv"
     if listening_history_file:
         listening_history_file_data = step1.csv_to_dict(listening_history_file)
     
