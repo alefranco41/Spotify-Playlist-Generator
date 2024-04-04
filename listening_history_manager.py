@@ -6,15 +6,11 @@ import math
 import random
 import os
 
-
-current_hour = 15 #int(datetime.now().hour)
-current_day = "Saturday" #datetime.now().strftime("%A")
-
 def delete_cache():
     if os.path.exists('.cache'):
         os.remove('.cache')
 
-def compute_recently_played_songs():
+def compute_recently_played_songs(spotify):
     #try to load the accumulated listening history (spotify API only allows to retrieve the last 50 songs of the listening history)
     try:
         with open("data/recently_played_songs.bin", "rb") as file:
@@ -207,6 +203,68 @@ credentials_dicts = {
             'client_secret':'c53c8201ba8447f0b559e62ef142f310',
             'redirect_uri':'https://www.google.com'
         }
+    ],
+    'difyekilmu@gufum.com': [
+        {
+            'client_id':'',
+            'client_secret':'',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'',
+            'client_secret':'',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'',
+            'client_secret':'',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'',
+            'client_secret':'',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'',
+            'client_secret':'',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'sugnehomle@gufum.com': [
+        {
+            'client_id':'',
+            'client_secret':'',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'',
+            'client_secret':'',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'',
+            'client_secret':'',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'',
+            'client_secret':'',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'',
+            'client_secret':'',
+            'redirect_uri':'https://www.google.com'
+        }
     ]
 }
 
@@ -219,6 +277,3 @@ def change_credentials():
     spotify = spotipy.Spotify(auth_manager=SpotifyOAuth(**random_credentials, scope="playlist-modify-private user-read-recently-played"))
     print(f"ACCOUNT EMAIL: {random_account}")
     return spotify
-
-
-spotify = change_credentials()

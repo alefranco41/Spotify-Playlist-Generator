@@ -1,7 +1,7 @@
 import pickle
 from scipy.spatial.distance import euclidean
 import pandas as pd
-
+from listening_history_manager import change_credentials
 
 def retrieve_playlists():
     playlists = {}
@@ -50,15 +50,15 @@ def compute_segment_distance(generated_playlist_features, history_pattern_featur
     return sum
     
 
-def compute_playlist_pattern_distances(playlists):
+def compute_playlist_pattern_distances(playlists, spotify):
     from step2 import get_features
     results = {}
     print("Results for the generated playlists:\n")
     i = 1
     for playlist_data, (generated_playlist, history_pattern) in playlists.items():
         if len(generated_playlist) == len(history_pattern):
-            generated_playlist_features = get_features(generated_playlist)
-            history_pattern_features = get_features(history_pattern)
+            generated_playlist_features = get_features(generated_playlist, spotify)
+            history_pattern_features = get_features(history_pattern, spotify)
             vertex_distance = compute_vertex_distance(generated_playlist_features, history_pattern_features)
             segment_distance = compute_segment_distance(generated_playlist_features, history_pattern_features)
             pattern_distance = vertex_distance + segment_distance
@@ -87,9 +87,9 @@ def generate_spreadsheet(results):
 
 def main():
     playlists = retrieve_playlists()
-    
+    spotify = change_credentials()
     if playlists:
-        compute_playlist_pattern_distances(playlists)
+        compute_playlist_pattern_distances(playlists, spotify)
     else:
         print("No new generated playlists found")
 

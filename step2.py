@@ -1,7 +1,6 @@
 import pickle
 from step1 import feature_names_to_remove, check_listening_history_file, data_directory, most_similar_song_sets_suffix
 from scipy.spatial.distance import euclidean #needed in the dynamic programming algorithm
-from listening_history_manager import spotify, current_day
 from datetime import timedelta #manage timestamps of songs in order to compute listening history patterns
 import random #choose a random listening history patterns
 import os
@@ -191,7 +190,7 @@ def compute_listening_history_patterns(periods, timestamp_key):
     return history_patterns
 
 #get the track features needed in the dynamic programming algorithm
-def get_features(tracks):
+def get_features(tracks, spotify):
     if isinstance(tracks[0], str):
         ids = tracks
     else:
@@ -214,15 +213,15 @@ def get_features(tracks):
     return feature_list
 
 #Dynamic programming algotithm that computes, for every playlist pattern, the best song ordering
-def compute_optimal_solution_indexes(history_patterns, playlist_patterns):
+def compute_optimal_solution_indexes(history_patterns, playlist_patterns, spotify):
     optimal_solutions_indexes = {}
 
     for period, playlist in playlist_patterns.items():
         if not history_patterns.get(period, None):
             continue
         
-        history_pattern = get_features(history_patterns[period])
-        playlist = get_features(playlist)
+        history_pattern = get_features(history_patterns[period], spotify)
+        playlist = get_features(playlist, spotify)
 
         m = len(playlist)
         k = len(history_pattern)
@@ -283,7 +282,7 @@ def compute_optimal_solution_indexes(history_patterns, playlist_patterns):
 
 
 #given the optimal song ordering indexes, retrieve, for every period, the actual song ids
-def retrieve_optimal_solution_songs(optimal_solutions_indexes, playlist_patterns):
+def retrieve_optimal_solution_songs(optimal_solutions_indexes, playlist_patterns, spotify):
     playlists = {}
     
     for period, songs in playlist_patterns.items():
@@ -327,7 +326,7 @@ def create_playlists_dict(final_playlist, day_name, history_patterns, prefix_nam
     return playlists
 
 #upload the playlists generated for every period on Spotify
-def create_playlists(playlists):
+def create_playlists(playlists, spotify):
     user_id = spotify.current_user()['id']
     for playlist_data, tracks in playlists.items():
         if playlist_data[3] != "our_method":

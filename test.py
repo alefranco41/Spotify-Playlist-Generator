@@ -1,5 +1,6 @@
 from step1 import csv_to_dict, compute_periods, compute_listening_history, compute_prefix_name
-from step2 import compute_listening_history_patterns
+from step2 import compute_listening_history_patterns, compute_best_history_patterns
+from listening_history_manager import change_credentials
 import os
 
 directory_name = "listening_histories"
@@ -10,7 +11,14 @@ def print_pattern(pattern):
         print(f"Name: {song['trackName']}, Timestamp: {song['endTime']}")
     print("\n")
 
-def print_listening_history_patterns(listening_history_patterns):
+def print_listening_history_patterns(listening_history_file, spotify):
+    listening_history_file_path = os.path.join(directory_name, listening_history_file)
+    listening_history_file_data = csv_to_dict(listening_history_file_path)
+    if listening_history_file_data:
+        prefix_name = compute_prefix_name(listening_history_file)
+        periods = compute_periods(listening_history_file_data, prefix_name, spotify)
+        listening_history_patterns = compute_listening_history_patterns(periods, "endTime")
+        
     for hour, days_dict in listening_history_patterns.items():
         for day_name, patterns in days_dict.items():
             print(f"Listening history patterns for Day {day_name} and Hour {hour}:")
@@ -18,6 +26,9 @@ def print_listening_history_patterns(listening_history_patterns):
                 print(f"Pattern #{patterns.index(pattern)+1}:")
                 print_pattern(pattern)
             print("--------------------------------------------------------")
+    
+    patterns = compute_best_history_patterns(periods,"Tuesday","endTime","LH5")
+    print(len(patterns[15]))
 
 
 def compute_longest_history_pattern(listening_history_patterns):
@@ -36,15 +47,15 @@ def compute_longest_history_pattern(listening_history_patterns):
     return (longest_pattern_day,longest_pattern_hour,longest_pattern)
 
 
-def compute_all_data():
+def compute_all_data(spotify):
     with open("data/longest_patterns.txt", "w") as file:
         for listening_history_file in os.listdir(directory_name):
             listening_history_file_path = os.path.join(directory_name, listening_history_file)
             listening_history_file_data = csv_to_dict(listening_history_file_path)
             if listening_history_file_data:
                 prefix_name = compute_prefix_name(listening_history_file)
-                periods = compute_periods(listening_history_file_data, prefix_name)
-                listening_history = compute_listening_history(periods, prefix_name)
+                periods = compute_periods(listening_history_file_data, prefix_name, spotify)
+                listening_history = compute_listening_history(periods, prefix_name, spotify)
                 listening_history_patterns = compute_listening_history_patterns(periods, "endTime")
                 longest_pattern = compute_longest_history_pattern(listening_history_patterns)
                 file.write(f"Listening history file: {listening_history_file}\n")
