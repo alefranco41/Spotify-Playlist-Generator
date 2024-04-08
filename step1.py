@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta #manage timestamps of songs
 import math
 import pickle
-from listening_history_manager import compute_recently_played_songs, filter_listening_history_file
+from listening_history_manager import compute_recently_played_songs, filter_listening_history_file, change_credentials
 from tzlocal import get_localzone #get current time zone
 import pytz #convert Spotify's time zone to the current one
 import csv #retrieve data from the "StreamingHistory.json" file
@@ -532,13 +532,14 @@ def generate_clustering_song_sets(clusterings, spotify):
             fpflh_song_set, fpfsh_song_set = [], []
             n = 1
             for cluster_set, song_set, heuristic in [(K, kmlh_song_set, 'l'), (K, kmsh_song_set, 's'), (F, fpflh_song_set, 'l'), (F, fpfsh_song_set, 's')]:
+                spotify = change_credentials()
                 for i, cluster in enumerate(cluster_set[0]):
                     m = playlist_length / (cluster_set[2] * 4)
                     if int(m) != m:
                         m = math.ceil(m)
                     print(f"m = {m}, number of clusters: {cluster_set[2]}")
+                    print(f"Generating song set #{n} for period {period}...")
                     if heuristic == 'l':
-                        print(f"Generating song set #{n} for period {period}...")
                         song_set.extend(linear_heuristic(cluster, cluster_set[1][i], m, song_set, spotify))
                     else:
                         song_set.extend(spheric_heuristic(cluster, cluster_set[1][i], m, song_set, spotify))

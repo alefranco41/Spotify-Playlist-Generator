@@ -97,8 +97,8 @@ credentials_dicts = {
         },
 
         {
-            'client_id':'',
-            'client_secret':'',
+            'client_id':'25fd5dd8887c47b8ab89ff8f5ac01e07',
+            'client_secret':'0f1009e7645a488c87e003a903326c0b',
             'redirect_uri':'https://www.google.com'
         },
 
@@ -134,8 +134,8 @@ credentials_dicts = {
         },
 
         {
-            'client_id':'c899bbdb5b464e4ebafe64ee3cedb12c',
-            'client_secret':'7dcf6f9de08f477bab7a851bb7ccb7d8',
+            'client_id':'43271199d09d4d3da4f6154b46cb895a',
+            'client_secret':'385cb2f396614e018f1963cdd34a88ad',
             'redirect_uri':'https://www.google.com'
         }
     ],
@@ -234,14 +234,14 @@ credentials_dicts = {
     ],
     'sugnehomle@gufum.com': [
         {
-            'client_id':'',
-            'client_secret':'',
+            'client_id':'639e6f779c3b413e80c81ec746924b6a',
+            'client_secret':'2e11db04ceac410e843037f1b43c2a6d',
             'redirect_uri':'https://www.google.com'
         },
 
         {
-            'client_id':'',
-            'client_secret':'',
+            'client_id':'4f06b63a0587467ca389b0579e35a700',
+            'client_secret':'af61e7d860f946ec8f06d1ff211e92ac',
             'redirect_uri':'https://www.google.com'
         },
 
@@ -289,8 +289,8 @@ credentials_dicts = {
         },
 
         {
-            'client_id':'',
-            'client_secret':'',
+            'client_id':'cba0f433cdba446283211c455fa6c99a',
+            'client_secret':'1975a1cc7b8345f7b5dd43696256307e',
             'redirect_uri':'https://www.google.com'
         }
     ],
@@ -308,8 +308,8 @@ credentials_dicts = {
         },
 
         {
-            'client_id':'',
-            'client_secret':'',
+            'client_id':'4d7730df714742beac17310640307272',
+            'client_secret':'fd133e91be384de597aa585d5c183cd7',
             'redirect_uri':'https://www.google.com'
         },
 
@@ -401,8 +401,8 @@ credentials_dicts = {
         },
 
         {
-            'client_id':'',
-            'client_secret':'',
+            'client_id':'3fb3824588b743399cdbead1395cdc98',
+            'client_secret':'fe2e5ba688974bdb88f9efd90f2b9276',
             'redirect_uri':'https://www.google.com'
         },
 
@@ -420,8 +420,8 @@ credentials_dicts = {
     ],
     'nopsimumlo@gufum.com': [
         {
-            'client_id':'',
-            'client_secret':'',
+            'client_id':'467eca8433764e2398f594ca20d8fa01',
+            'client_secret':'0e1558dbff004fc59abfffcb71ab282e',
             'redirect_uri':'https://www.google.com'
         },
 
@@ -506,9 +506,9 @@ credentials_dicts = {
         },
 
         {
-            'client_id':'',
-            'client_secret':'',
-            'redirect_uri':''
+            'client_id':'cb1a2e639e9e4e269e464c49f086997a',
+            'client_secret':'4e4d55e26e6d4c788a5926604dc5659b',
+            'redirect_uri':'https://www.google.com'
         }
     ],
     'fafyohugna@gufum.com': [
@@ -575,8 +575,8 @@ credentials_dicts = {
     ],
     'rapsijifyu@gufum.com': [
         {
-            'client_id':'',
-            'client_secret':'',
+            'client_id':'6b082062df024fe19b7bed1324ca65da',
+            'client_secret':'33f3e0d797d04570a09ed91349b2e3fa',
             'redirect_uri':'https://www.google.com'
         },
 
@@ -655,8 +655,8 @@ credentials_dicts = {
         },
 
         {
-            'client_id':'3749253b8f004738a49ba7cbf6556221',
-            'client_secret':'d43f9613e7594a27bbfa4be4664fb0a4',
+            'client_id':'f0acf2c298d84f51a02e3a61d7c6b1b4',
+            'client_secret':'7961ae28c7b141e583789a03aff922a7',
             'redirect_uri':'https://www.google.com'
         },
 
@@ -916,8 +916,8 @@ credentials_dicts = {
     ],
     'zorkarefyo@gufum.com': [
         {
-            'client_id':'0bf970ed08ab4cc19b453b1d03a97f1e',
-            'client_secret':'f61e0868c28340ec965fb84bce0ed7f9',
+            'client_id':'cb72f2c2ed4f4ce88b7d4ecf7c135ebf',
+            'client_secret':'f985a077697d4e2abbd24fb4bfc03c28',
             'redirect_uri':'https://www.google.com'
         },
 
@@ -1068,9 +1068,1130 @@ credentials_dicts = {
             'client_secret':'d55b27bde46a43c3a04feb2ba5a90857',
             'redirect_uri':'https://www.google.com'
         }
+    ],
+    'viydogispe@gufum.com': [
+        {
+            'client_id':'0b586f70b2964b04ab39cfda5c95bf0d',
+            'client_secret':'e9a3309c0fe242a9ad0394b6cc032c43',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'6ac1a2c3e87d42b0ad42568f1a8070e3',
+            'client_secret':'d8ca8bf2435245ab88e1d18223b1ea72',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'dbfb12002c22485883dbdc0966ce4d97',
+            'client_secret':'a107ac58d524487aa3aba806cd4477a7',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'264712c37a70403dbf902e1c54094664',
+            'client_secret':'9c6c8b64162e4eebb29aa8b5b60544eb',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'c5986ffbd0a94e739fc729d50bd41704',
+            'client_secret':'39d2da7efbd6415c99fe8879305cc78d',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'talmotuyda@gufum.com': [
+        {
+            'client_id':'03ea58d01bb944d3bb1ad33bddfc973f',
+            'client_secret':'fc50177499a64df1b67bcbb1535b1a48',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'c30a869f5ff24d9caecc00770ab93013',
+            'client_secret':'bd8d0cd772d44423a9828cf865c3cab1',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'3f2d1ed059cd45ccbdf3e94f8970cf93',
+            'client_secret':'1a7c85ec0b214955a620bde64e358d40',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'6010c7cc6317485c9acb7e43c12be4bf',
+            'client_secret':'0d91010ec68c484b9898eb9dd0c458b4',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'e24078f758bc4448a777a6acaf13b9bd',
+            'client_secret':'c3159d28bb504ab3a501cf4f5b30cb62',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'dutrikeydu@gufum.com': [
+        {
+            'client_id':'a4c1cba798164a93954e996699afd217',
+            'client_secret':'04bc4027eba443fca2c211923f35037f',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'607e334ea1de4f2b86c6d70a09bcb122',
+            'client_secret':'b0262c5b4e714cd38c73954cd751e48c',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'6274f04b15f94f2988449554155b1810',
+            'client_secret':'b3f94951f6294a60857e9df3e1e03769',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'84317a4bd70f41cca6511b94f1c165c9',
+            'client_secret':'cfc7bf24b10544a5b27a01ac19905ff7',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'aa50a9df9b2c46088f52174dae8868e0',
+            'client_secret':'7806d074e8d7472a95fc5b912d1655a3',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'keydametro@gufum.com': [
+        {
+            'client_id':'3fd8e6b68437449392e9fa0002eb79d2',
+            'client_secret':'2aed2f43580d4073807ff9e69354c293',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'757d3d3e74964169830cb4f35ff6a7c2',
+            'client_secret':'4e9d2335a0ad423eb450f4e821907514',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'f98d738d8c3c4c48afa59c3fb0fe9bc5',
+            'client_secret':'48c94ad1c0eb4f96be25a408e12381fb',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'38b2591c6aa44054b7d1db916e281963',
+            'client_secret':'4dd38af2b3a9432eb528901060b99285',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'f61aec1a025c46afbede39a13a9e3505',
+            'client_secret':'e30ee0efcac04a6e883a207bde3520fe',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'zatragimle@gufum.com': [
+        {
+            'client_id':'5ca89b1a94d840809b2fc4212e7e3c93',
+            'client_secret':'36bc2b29b9664e308b7a69b8edc35b6a',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'a8f959d58663417bb6f2ea0d88f9d108',
+            'client_secret':'3f944feb9ec44e96bfe4f869a3b82196',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'d91b33629ff542e8bf18962c13d1e140',
+            'client_secret':'31a6987a878e4c0e85a2e0c144ee7566',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'c2e77d9bc4ff4a0da3f5545670390dc4',
+            'client_secret':'06bace3aa6c54752ab3381b3c6241af8',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'786e3814cbaa42f3ad7addd1b7d1c9af',
+            'client_secret':'c3b1a67a65ed4ba39a178716998b3c2a',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'zipsedospa@gufum.com': [
+        {
+            'client_id':'d12832e228a74e95a9688328a567d4fc',
+            'client_secret':'08b8d3d2ebd84a33b7f9c8a798f2c401',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'bba4b73a077947ce9c5862c6414bdf1f',
+            'client_secret':'b23389fc7f2e41778082155724b285e3',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'a64545715c1b4b698ff7aa09167f71f0',
+            'client_secret':'6d5d05203e1a4bc8b060b9371993c2ee',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'3c8c3d06c55e4be1ae47ed243c8c2ed9',
+            'client_secret':'983de8fe18d842b5817e0248a6c4ee1a',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'6e9de4a68b904b9594dafa72040ef8b0',
+            'client_secret':'64f135f37d4545a2962d0411c137d04a',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'neknuceydi@gufum.com': [
+        {
+            'client_id':'e76d90e9e8194b8f8372936117a2fc76',
+            'client_secret':'b232ff3da6b14de1a261b017dbb2ec49',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'ffb3bb498a9a4c5f94b6b5e442b7257e',
+            'client_secret':'3ea78854044648bea568557369678ed9',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'8267c67a511543cd8adeacaaf31a2ac9',
+            'client_secret':'59999cc199c345f199e2b4a0243f030e',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'88b0b2281b10472d9b82937247d024d1',
+            'client_secret':'137e780b293d404fba1b8d01054f3bf1',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'3ec57acc9da5436ab8d15ddbe26d0611',
+            'client_secret':'d61fdde7ad7d47c99e11be7e728dd03c',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'gotrokagni@gufum.com': [
+        {
+            'client_id':'92f1489cfa604bc2be3bd3de99de5fce',
+            'client_secret':'d9faa0ac46df49958f678553f592a90e',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'966795f958944453b5fbd1cf3566f02b',
+            'client_secret':'3ea2b3d524e54dfda81c4150ec655907',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'f8ec3b4d650f45d0b847ef9789ed9b24',
+            'client_secret':'5709bd48b5654c0ab8044ad8ae788787',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'207c70d881e645c197eec80d8cf00534',
+            'client_secret':'91ece84f7a934f7e9fe276ee7c670b0a',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'7700878d9bcf4241ab4720f1a1f968ef',
+            'client_secret':'9090d54dedf847958eb8a449ec0ebb45',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'zafyeyoyda@gufum.com': [
+        {
+            'client_id':'b120368347eb428ca86d3b308693b6f2',
+            'client_secret':'5a53768870cc48c6a494a42935f0c748',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'6a6e8a1064ca4c9bb832a63b7128b2e0',
+            'client_secret':'6109b0da1827437e80de9bcf3f28f056',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'db4e8400f53a47faa89e72a1097b04bf',
+            'client_secret':'0bea6ba87c3445109c671635c7d1502b',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'20fa8d86c0d24dcf80c750580108fa99',
+            'client_secret':'688e96c1bf284dbe835e3b5d098a2be4',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'13d0175d400a44ef9dca95be63abfaae',
+            'client_secret':'587e08724f3d499db1d2fc24101d4556',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'vaydodagno@gufum.com': [
+        {
+            'client_id':'8ae4a98788b545c290dab17502f813bb',
+            'client_secret':'a8848cf588b14007b245f4243d683352',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'246b0e85a2a84f44964216ee41e21e0d',
+            'client_secret':'018eede61d234dad95c5a0c65d5b23dc',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'5519001b8a6e4d8f8f1d2d9b207824cd',
+            'client_secret':'bf378ccac7134e898cfa05f5a6dfeacc',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'349e730e64f3479f84d3c0860e0c0e20',
+            'client_secret':'f8b59330af054ced8572074ca5ad73f0',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'0484cb8e640344c5aad3c5427de8b9d3',
+            'client_secret':'d3d9f9efdbb843189f7172f3ad7c0059',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'gemlotafye@gufum.com': [
+        {
+            'client_id':'5abdd9b0bf254b5da735f24161e3911a',
+            'client_secret':'360a8b21d1654149a6714fa8c8ecdf5a',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'e168b7cab93849069b61e3ad05c9fe16',
+            'client_secret':'7b7e58cd73aa4144a7cae0058901fb3a',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'de36b3587f034fb49887585cdb2ac14b',
+            'client_secret':'d0f0c127839c45148d54fabc66f43d68',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'57bbed8eb3454b6b8c622f9fdea84f6e',
+            'client_secret':'49c99566971a42deb1799854de701764',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'fc68e38ec545475095c7b243ad4eb993',
+            'client_secret':'2fbf068a32cc4570a2867f4f92d38a34',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'yorkenifyu@gufum.com': [
+        {
+            'client_id':'c2e97c3d55f54785b8c5e7c90d295738',
+            'client_secret':'e5467edc586347f29293bdc6c58b8f04',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'045c631bf9d44362915ef9c8241e899e',
+            'client_secret':'6471b90ac34a478491ea9d5b20a7947a',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'0fc4b5a16c44445081e707d451859368',
+            'client_secret':'b37bc984288e421391eb3020e3f8a9a8',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'ef3e59f81eb045b6ba20a881ab836a6b',
+            'client_secret':'8b96d0ccdf9342fdaeec117922c64a80',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'e8aca0d801e149f5ae18aedcffb64bf8',
+            'client_secret':'b12e455bf91f46a5b61f7235fcd7567e',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'rulmupefyu@gufum.com': [
+        {
+            'client_id':'c3c241c5d7a64cfe82709c9951dd6e05',
+            'client_secret':'8e096e444990482f80ce1cff721e446e',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'ff9107715eed4bb7a69b97fe1ad33ac7',
+            'client_secret':'f11f329c25324fd782a880a7a5442be8',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'0155dee444dc445cb6b490620bcc3fcc',
+            'client_secret':'6ff4da2deac24cf1ae8f7d22d4893c01',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'35153339d1fb4e25badd3ef1ce9589a4',
+            'client_secret':'1958bf74dc7241558af2ff174d4d772d',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'374968e436cb483198720cda08c4cc75',
+            'client_secret':'bf2f84dd7f50496e92fdef2b1e8ded2e',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'catrohafye@gufum.com': [
+        {
+            'client_id':'592304aa1df347cba0657f368fffb455',
+            'client_secret':'3db94811d7da4f3a99124b9c1874c074',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'23c01ee55be64075ad89a02e9a12dee8',
+            'client_secret':'d09ca6bb4bc04432bed522488236185d',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'81394151d5f74416be7abef25fabce1a',
+            'client_secret':'2611422ad5a549688688c4103062753c',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'0ba85a233de7425ba69a934461b43244',
+            'client_secret':'1b2343a9506a4ecc93e8ab9a50988f12',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'b08d267172a641078907c57f9c537307',
+            'client_secret':'f167b28f112e491392ebaec39149f23c',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'zitrayimla@gufum.com': [
+        {
+            'client_id':'bb8f56df5fba47298256e008f0f5c0ff',
+            'client_secret':'4e1233501d4846d281e1a5cc585c1cbb',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'cdeb911f7d364359b25f268d3edeeaf6',
+            'client_secret':'11fd490edc2b4d4a9ca7aeda23a8c4da',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'ab54c6563ece4311a4aa5203f98eb647',
+            'client_secret':'07045275764b47008528bee28905e17b',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'25df2cfd8c754cc1913b7c9d127f58a3',
+            'client_secret':'7953c8dbb07f4de3b62d0002789a0032',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'7b56020cc89d42c89e558570f59832fd',
+            'client_secret':'87b4617dd1c141c6ada312ea1d59ab94',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'gifyovadru@gufum.com': [
+        {
+            'client_id':'a4d4868d932e4f199ad6cad92c3c498f',
+            'client_secret':'a4d4868d932e4f199ad6cad92c3c498f',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'58de95bbac8c4d3a8c36061602b3e95f',
+            'client_secret':'2484146ea27243ed95c33d2b0a40af8d',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'07ce1d54b76e45f881afb8625f9a0a9f',
+            'client_secret':'a00d880d446b4c109ff2833b4047a667',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'cf84fd7fa0e9494ca5d87c4a80db855b',
+            'client_secret':'632052cb9e704e2aa9e5029be90d3d71',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'8d4134ca1462466e82fd2cbdffde2b1f',
+            'client_secret':'76d9d80e5aa74b7da64e35f117d88394',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'podrololta@gufum.com': [
+        {
+            'client_id':'5c7846b1fb8645fe84bb60b4565d5bce',
+            'client_secret':'d6644561e7ac49c895a077f509b273dc',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'f0a0d2cccd3243a89251f9e4edc3f442',
+            'client_secret':'3715b4a03ed046dcab0e548b35153e72',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'4d738a0842b7404c9890d3370ffbc23b',
+            'client_secret':'92ae3e5032ac428c93dd68d11f07acdb',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'7e943fe361514702875e83fab3d709f8',
+            'client_secret':'b9dfabf2deab40c1ad92e80b7a3c5056',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'9b67065fd69843be86caaa574586cdb1',
+            'client_secret':'880b82e273084d83aa236cc4eba6b935',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'zignipamla@gufum.com': [
+        {
+            'client_id':'fa4914f3fe4847129da19882c8d7a764',
+            'client_secret':'646dac346a5e4a669d709f135469393a',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'b1be29f61e3b4ffd9df7c7635b33a441',
+            'client_secret':'854ba1aa89fe468dbf6e7776d057fc6b',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'c28dcbc18d5d485b9e730e02db1818ae',
+            'client_secret':'d4f3891bc53448458cc860209674a579',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'5ad0bc7313f44b13a96791205beefd11',
+            'client_secret':'021375bb07394c0ebd876609dd43d2cb',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'5d5b12bdf1e04d829b55418f362dacfd',
+            'client_secret':'82ba8bac42a44b799f977ff568c649e7',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'jukkekerko@gufum.com': [
+        {
+            'client_id':'e2307ff9812b4ce6b509e8f94f3db6d1',
+            'client_secret':'05e655cf301a40dd8775bd484cc0f5b4',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'fbb83e4af2334017a0898ba6ed5b85fb',
+            'client_secret':'6a5241ff7d564db7a6dd86fcf8ae3999',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'b52432a8a2bf45ffa659935b98a9b95b',
+            'client_secret':'576f72deda8446cbaa57545d641da575',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'6d6e7758f7fb47ef9564afb8118eb78e',
+            'client_secret':'161e55ad8bb744f08e230735aa78e22d',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'8903c9d1960b441aabb49760df374e9b',
+            'client_secret':'fbbf80469e2e48e2b9575862fa1d86ba',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'berdupulmi@gufum.com': [
+        {
+            'client_id':'e00457cadfd040ca8fb07d366199dd45',
+            'client_secret':'418a41959c5a4ed6bbeb3cfa8f25cede',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'ae2403d4981c4c6c95f581066ad8b341',
+            'client_secret':'dd451329dc094bb7b268f714b4f65e4e',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'a65c775ad6a744f5b205306100e1df59',
+            'client_secret':'f91726697ddd49aeb6b9aee889223ff0',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'d7f51bf5e14c44b689df36639d4a1cbb',
+            'client_secret':'e676e59cbc4940efa8386ae79ea9c25f',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'3171cb494c5b437f9bc35083ae9b66f2',
+            'client_secret':'6f484d98611947499bea08e824b2a3d0',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'carticakku@gufum.com': [
+        {
+            'client_id':'d78f63fad043426291d1ca50692cabb0',
+            'client_secret':'94990bceadd34b52b683a8882840d9ab',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'1c5a15a192714a5b9287c34e29bea169',
+            'client_secret':'39d5a1d35d69493ab309b39bb042cea9',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'db59f83148b04a15ae65ba4af826fcfc',
+            'client_secret':'cd740df0c2c1475eba2c2d28186f3635',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'d03ddcd3d127440080c93ec7eda6ac90',
+            'client_secret':'9af0f1511b154a938ab4b12fc177d41e',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'497b10e90c264286a0cb55136eb7e88e',
+            'client_secret':'9bc1bc38bbde4f4aa5589ba2bd69a0ae',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'didriyotra@gufum.com': [
+        {
+            'client_id':'53c785d580fa46a9b6809db44e3c2188',
+            'client_secret':'179849ca13c44568bc11bd50c8b60d0f',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'55841177bd894fd8a52c65ceb3caf04a',
+            'client_secret':'9e2f856d1b3049dfa62d0a04cd1eb040',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'f3460b15c5f44ef88bd286c3a02f9e41',
+            'client_secret':'ab21d909731e4498b1cfa64da8d8ddd9',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'7c105d8b69204ea6a5516a65c416e110',
+            'client_secret':'847288dc27104856a47a851edefeee44',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'7fe6cd3fdbef49528f15caeb4099b6db',
+            'client_secret':'19627a4fcc8446cbbbe1d9a3ae9f90f9',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'zegnavurda@gufum.com': [
+        {
+            'client_id':'53d1a65feaef403f9faaf8595ea4fedd',
+            'client_secret':'de5a79001371406db8b53ebc986deff8',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'81b969b175cc411a95f91f9fc1eb5f55',
+            'client_secret':'38f17ed1bd6e432db099fca63659765d',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'6c8c700f1de94b239b5139bb8eb839bc',
+            'client_secret':'2da40c12dad94f67a564d5985f498701',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'60199b1497794b919f660d97da9021ed',
+            'client_secret':'94a66723781541fcbb9748fc8916b117',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'9fd145dcaa0f47288cb634be0a2cb83d',
+            'client_secret':'4eea0d6060de4f189520ce4a88955d75',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'zokkafipsa@gufum.com': [
+        {
+            'client_id':'5bfa98e207ce4c8a976fb7c98a77a5c2',
+            'client_secret':'6afa7a925b194ce786fc4816a009fcc9',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'adb010e1004b43b49260aefac343b90c',
+            'client_secret':'f24172af33174959a34ab537e31ad360',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'33854dbe6af5411d9cc4c5ddfe77cd78',
+            'client_secret':'f62ac9cb350149d9950473d515ac048a',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'50defd41994f4ad4a455a648d5235c49',
+            'client_secret':'db52d73033f54babbdaeb218cf3c4e36',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'87dcd1c388524c03bc8f94771f487652',
+            'client_secret':'ad59b9e8e82746149a4c7780f1e8bfd7',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'ramlozimlu@gufum.com': [
+        {
+            'client_id':'3d8edc71e64c4dc2a7bdaffadde65b7f',
+            'client_secret':'d2ec8821094a406b9fd02d6173c25ba1',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'3590979eb5354bf98347e6af395e99d4',
+            'client_secret':'a77ea50a9f214acf97e20502bd0f2de8',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'f4d1e4be36894c4b995afb8f3e4b45cc',
+            'client_secret':'6dcc209edb9d4322928315badd643163',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'99ad661765b8485e82f3568421fefc66',
+            'client_secret':'29272ea6ca7842879d4bcd60a0b583d8',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'2ff6c3df665546d6b875f669044821c0',
+            'client_secret':'7126a4fae95f40f5a12f4601518066ef',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'jadrudukke@gufum.com': [
+        {
+            'client_id':'77e482aebcdb47a78b8fea00d4ef246c',
+            'client_secret':'dc37c29789634f82bb1dbf18bcf090da',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'c8dc2605fd0e4244af57278c885a8df6',
+            'client_secret':'c250b57ad1894086bc7a76ea19988219',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'d5ba67dee5e1486c8b334b8d9db0c3e5',
+            'client_secret':'a3acd5fbef0a4176b1c3904cddc8779a',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'6ede402bf7714489a35f185ae0ea154a',
+            'client_secret':'bca3f0fcbbc44f0e93381466dede801f',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'c0ca9f9f5de64065998f8bfe1425b77a',
+            'client_secret':'63d4ad54bfd741fd95ce0cbac7ae990c',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'celtatirki@gufum.com': [
+        {
+            'client_id':'66004209bcf643ddbac34e255036f0c1',
+            'client_secret':'3de05468ce254c129986df27f383ba48',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'88f116ac7089426592d94bc7c2c2798b',
+            'client_secret':'f91df43be8d5482286bd43acfed7a752',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'77352e3f51d047129d2a40394bfa5105',
+            'client_secret':'128f5480bfa249bd8df2ce0358741194',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'74416894341a43f98d880c1064faaced',
+            'client_secret':'72b3cc2f9dde4e87a84024df5a8ff268',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'3f2df329f81e4532b7aa4999534e965b',
+            'client_secret':'50361badcbfa41b9bdf55a24a86d1b17',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'kefyefospe@gufum.com': [
+        {
+            'client_id':'8818fa31d8494d37b491d4cd8395cfee',
+            'client_secret':'3522b73a01474a3abd91156ecb5af6f7',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'3582ae2eba814e42abe2ad406fb2cd2e',
+            'client_secret':'b59ce662eac646a797fef69a6dc9ec88',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'1fb3d9ba35e845b48e220510533cddda',
+            'client_secret':'8eed783b716541a181073d7230092edc',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'3730d6333bb04d838aeb67a7ba5989ae',
+            'client_secret':'5730715f26704e2b91ac0acfd9de13bf',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'ee39e714b7654b2790079ca323edb200',
+            'client_secret':'a9868f60278d4162bd7447881f73d997',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'zugnalitri@gufum.com': [
+        {
+            'client_id':'33e59dffbf334206930b9321088ed2eb',
+            'client_secret':'96952b9fa57d4c35836a1e6420f95244',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'e5f8e0dc84cc456588c6d62b08916889',
+            'client_secret':'46c66d15a59c4a9fabf4851469240136',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'b5fa4f2cb56c4ad28a449fe1c4d4b397',
+            'client_secret':'478ea14ce9b643ceae021aa917133244',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'0c05a8cb2716424c8cafa2b6cedbe5e2',
+            'client_secret':'4036d834dfdb48bfba7f46968350dfe1',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'fe6e5d5a7e684ea695554893b5659447',
+            'client_secret':'95f08031276847ee9119ee63efcec2f6',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'nadrazukno@gufum.com': [
+        {
+            'client_id':'9dada1dc66994c32bf4b232cbb3830c3',
+            'client_secret':'68cc4f06512f450c9e3a9e3ffb021c11',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'037ef104eaea4eca8ea51afd384c5339',
+            'client_secret':'92baafaee9294e9d8aecb5808098ea52',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'11a8fc7acd43426eb6d28dfaca310f25',
+            'client_secret':'dc55549a808c43b3b3bcd6aac5ab6c51',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'2a0d85808e4046bcb2d5a656968a4fcb',
+            'client_secret':'d1888c948b3945d2843822fb65ca0fc1',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'a038b6e86340461dab5398c11d611703',
+            'client_secret':'6c1be70115f3490ab98a52d11c7588ae',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'meknuzipse@gufum.com': [
+        {
+            'client_id':'c384764cda734b76a33b28d807123450',
+            'client_secret':'795edb6269e94c6eb7380f3fc2eb69b8',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'c862c43218c54f27b5cb3cbb9bd01905',
+            'client_secret':'eca414adca684f8b815db742fbe86373',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'6993c783cadd4d41aec5a911625bd50c',
+            'client_secret':'b9cead61204d4b0bb9a178fc5de0b007',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'4c8c7ef1e8144a54ad0d949aa6812529',
+            'client_secret':'00df43fa5b694f9eb50fb515c71699cd',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'9e87e6a053194048886a248bd70e3e86',
+            'client_secret':'fa53177bd97046eba1b0ff0b6278ba8f',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'birtinosto@gufum.com': [
+        {
+            'client_id':'15d5be5137bd481796d3d8d6c1654d16',
+            'client_secret':'bdbd96f24a024d698d13cec101ab86e8',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'665dfb8bb7984f02ada49885c20e5dac',
+            'client_secret':'89e0fcad961c41199dde0ef7c37776af',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'a3a57e90239f45fbb50803766e0c3020',
+            'client_secret':'da26d0e322ef43938c765a994251e135',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'be34e6eae9ae4f59a54faf8915560d14',
+            'client_secret':'4da2a93a602f44ec9918c25283328658',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'ff4a1c6baca74d51a8533efdc67f8125',
+            'client_secret':'2c39f0f49bc14e8abc9408698fdfaecb',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'cutrodolto@gufum.com': [
+        {
+            'client_id':'6c6f6d408527401ead15a290938618f0',
+            'client_secret':'9f5b1a66651f442da3542d15e8340df9',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'49b999460c4341858c7113adb9d099f6',
+            'client_secret':'5ef75932e3e04a8b9ac2d6ca72bd9fdf',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'a5c922e7d70e4dc3a8bea730b3a97949',
+            'client_secret':'06ee48f627e04487baf80f6557c80348',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'8381068f3e2b4bfd9ecbbc018dcfc53a',
+            'client_secret':'c02bac0906f94614ab0ded9f3f36398a',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'42c1aed176664abb8d9ac43aab556f01',
+            'client_secret':'64cb54cf7f034469b5b44903b73bb3e9',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'zarzokasti@gufum.com': [
+        {
+            'client_id':'ae4318a8b9fc4029a0a1abd880eb8134',
+            'client_secret':'5d3e17da32dc435b89ccb9762208a04e',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'95c4df9c3ec54a67960ed77157a058c3',
+            'client_secret':'5a65256e5001410e8f1e434a7df3d7b2',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'227ed69b045c4de7b73c85ef638680d6',
+            'client_secret':'ae42ba807fe240ac918567dfcb2ec57c',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'b5428b81c15c4a16be6289e6f155fbaa',
+            'client_secret':'ec04b568e6f04ba19588db4fab2ba3ac',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'ae792f58d3a84e2eb748ba6aa73146e3',
+            'client_secret':'c99cf220cc754fbdbfee1fb0273bc972',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'derzokelto@gufum.com': [
+        {
+            'client_id':'249c21bef3144a428b7c364d3f29645d',
+            'client_secret':'f9b95527bb724d3397f9100c99cc4d79',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'ca1d042a3fea4a4e899967894b9a3a87',
+            'client_secret':'00980402eee547249e266da5cc18b852',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'082c8942234c4a2da8f5f5962e1cbc92',
+            'client_secret':'81fd39e534a54af88290f97269d187c6',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'611e8ca7dcc94a3baa4220ccda51e46c',
+            'client_secret':'573fb5511130445ca076c02aaf4fcd04',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'773dc2b5ff0d4c2d9e716282f241d3f3',
+            'client_secret':'6442535f03b44abeb4a0633584bd7798',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'dortisospo@gufum.com': [
+        {
+            'client_id':'fbfc11b0f1e1443e854b6620c831882e',
+            'client_secret':'55e2f0ad26154515b674f65f6dd8a4d3',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'763b49fa0ea94f1cab540930cd35a5e9',
+            'client_secret':'e196535bdf1d407792e5ad86fc1d5d05',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'9bcd91d9077647888deb015ed47d2e20',
+            'client_secret':'6b4fe72467564c1bba55ad963097cab2',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'ec655945e6524f31a34af33236211fdf',
+            'client_secret':'cf772a8d61294d698c55c726b4c2dca6',
+            'redirect_uri':'https://www.google.com'
+        },
+
+        {
+            'client_id':'13ea4ab1920d4a569e5a88cbf6ecc2f4',
+            'client_secret':'fe7c7a2a07304556927de2ccf5b2a89e',
+            'redirect_uri':'https://www.google.com'
+        }
     ]
 }
 
+def print_in_box(text):
+    border = '+' + '-' * (len(text) + 2) + '+'
+    print(border)
+    print(f"| {text} |")
+    print(border)
 
 def change_credentials():
     while True:
@@ -1081,13 +2202,19 @@ def change_credentials():
             credentials_index = random_account_credentials.index(random_credentials)
             credentials_index_complete = account_index * len(random_account_credentials) + credentials_index
             custom_cache_handler = CustomCacheFileHandler(credentials_index=credentials_index_complete)
+            print_in_box(f"ACCOUNT EMAIL: {random_account}")
+            print_in_box(f"ACCOUNT CLIENT-ID: {random_credentials['client_id']}")
             spotify = spotipy.Spotify(auth_manager=SpotifyOAuth(**random_credentials, scope="playlist-modify-private user-read-recently-played", cache_handler=custom_cache_handler))
+            user_id = spotify.current_user()['id']
         except spotipy.oauth2.SpotifyOauthError:
+            path = f"cache/.cache{credentials_index_complete}"
+            if os.path.exists(path):
+                os.remove(path)
+            continue
+        except spotipy.exceptions.SpotifyException:
             continue
         else:
             break
-    print(f"ACCOUNT EMAIL: {random_account}")
-    print(f"ACCOUNT CLIENT-ID: {random_credentials['client_id']}")
     
     return spotify
 

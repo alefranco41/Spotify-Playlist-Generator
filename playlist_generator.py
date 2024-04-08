@@ -47,8 +47,7 @@ def parse_arguments():
     return current_day, current_hour, listening_history_file, step2
 
 def experimental_phase(ans, prefix_name, current_hour_listening_history, periods, our_method_playlists, spotify, current_day):
-    if ans != 'y':
-        spotify = listening_history_manager.change_credentials()
+    spotify = listening_history_manager.change_credentials()
 
     playlists_rec_1 = other_methods.get_rec_1_recommendations(current_hour_listening_history,prefix_name, current_day, spotify)
     spotify = listening_history_manager.change_credentials()
@@ -66,7 +65,6 @@ def experimental_phase(ans, prefix_name, current_hour_listening_history, periods
 
 def main():
     current_day, current_hour, listening_history_file, force_step2 = parse_arguments()
-    spotify = listening_history_manager.change_credentials()
     listening_history_file_data = []
     
     if not listening_history_file:
@@ -82,6 +80,7 @@ def main():
         print("Since a valid listening history file was not provided,\nthe software will try to generate a playlist by using the last 50 songs played through the Spotify API")
 
     #listening history processing
+    spotify = listening_history_manager.change_credentials()
     periods = step1.compute_periods(listening_history_file_data, prefix_name, spotify)
     listening_history = step1.compute_listening_history(periods, prefix_name, spotify)
     listening_habits = step1.compute_listening_habits(periods)
@@ -116,6 +115,7 @@ def main():
     timestamp_key = step2.get_timestamp_key(periods)
     history_patterns = step2.compute_best_history_patterns(periods, current_day, timestamp_key, prefix_name)
     optimal_solutions_indexes = step2.compute_optimal_solution_indexes(history_patterns, most_similar_song_sets, spotify)
+    spotify = listening_history_manager.change_credentials()
     our_method_playlists = step2.retrieve_optimal_solution_songs(optimal_solutions_indexes, most_similar_song_sets, spotify)
     our_method_playlists = step2.create_playlists_dict(our_method_playlists, current_day, history_patterns, prefix_name)
     #step2.create_playlists(our_method_playlists, spotify)

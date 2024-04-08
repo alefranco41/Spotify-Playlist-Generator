@@ -3,6 +3,8 @@ from scipy.spatial.distance import euclidean
 import pandas as pd
 from listening_history_manager import change_credentials
 import matplotlib.pyplot as plt
+from spotipy import SpotifyException
+from step2 import get_features
 
 def retrieve_playlists():
     playlists = {}
@@ -50,58 +52,79 @@ def compute_segment_distance(generated_playlist_features, history_pattern_featur
         sum += euclidean(generated_playlist_track_features,history_pattern_track_features)
     return sum
     
+def compute_pattern_distance(generated_playlist, history_pattern, spotify):
+    generated_playlist_features = get_features(generated_playlist, spotify)
+    history_pattern_features = get_features(history_pattern, spotify)
+    vertex_distance = compute_vertex_distance(generated_playlist_features, history_pattern_features)
+    segment_distance = compute_segment_distance(generated_playlist_features, history_pattern_features)
+    return vertex_distance + segment_distance
 
 def compute_playlist_pattern_distances(playlists, spotify):
-    from step2 import get_features
     results = {}
     print("Results for the generated playlists:\n")
     i = 1
     for playlist_data, (generated_playlist, history_pattern) in playlists.items():
         if len(generated_playlist) == len(history_pattern):
-            generated_playlist_features = get_features(generated_playlist, spotify)
-            history_pattern_features = get_features(history_pattern, spotify)
-            vertex_distance = compute_vertex_distance(generated_playlist_features, history_pattern_features)
-            segment_distance = compute_segment_distance(generated_playlist_features, history_pattern_features)
-            pattern_distance = vertex_distance + segment_distance
-            results[playlist_data] = (pattern_distance,len(generated_playlist))
-            print(f"Result #{i}:\nListening history: {playlist_data[0]}\nDay: {playlist_data[1]}\nHour: {playlist_data[2]}\nMethod: {playlist_data[3]}\nPD: {pattern_distance}\n")
+            while True:
+                try:
+                    pattern_distance = compute_pattern_distance(generated_playlist, history_pattern, spotify)
+                except SpotifyException:
+                    spotify = change_credentials()
+                    pattern_distance = compute_pattern_distance(generated_playlist, history_pattern, spotify)
+                
+                if pattern_distance:
+                    results[playlist_data] = (pattern_distance,len(generated_playlist))
+                    print(f"Result #{i}:\nListening history: {playlist_data[0]}\nDay: {playlist_data[1]}\nHour: {playlist_data[2]}\nMethod: {playlist_data[3]}\nPD: {pattern_distance}\n")
+                    break
+                else:
+                    continue
             i += 1
         else:
             results[playlist_data] = None
             print(f"Couldn't compute Pattern Distance for playlist {playlist_data}:  its length ({len(generated_playlist)}) differs from the length ({len(history_pattern)}) of the corresponding history pattern\n")
     
+        
+
     with open("data/results.bin", "wb") as file:
         pickle.dump(results,file)
     
     print("The new generated playlists have been uploaded on 'data/results.bin'")
 
-import pandas as pd
-import matplotlib.pyplot as plt
-
 def generate_spreadsheet(results):
     data = []
+    methods = ["our_method", "rec-1", "rec-2", "hyb-1"]
     for key, value in results.items():
         LH_filename, day, hour, method = key
         if value:
-            data.append({'LH_filename': LH_filename, 'Day': day, 'Hour': hour, 'Method': method, 'Playlist_Length': value[1], 'Pattern_Distance': value[0]})
+            all_playlists = True
+            for m in methods:
+                if not results.get((LH_filename, day, hour, m), None):
+                    all_playlists = False
+            if all_playlists:
+                data.append({'LH_filename': LH_filename, 'Day': day, 'Hour': hour, 'Method': method, 'Playlist_Length': value[1], 'Pattern_Distance': value[0]})
     
-    df = pd.DataFrame(data)
-    df.to_excel("playlists_results.xlsx", index=False)
-    print("Spreadsheet generated: playlist_results.xlsx")
-    
-    #average Pattern Distance grouped by LH_filename and Method
-    grouped_df = df.groupby(['LH_filename', 'Method'])['Pattern_Distance'].mean().unstack()
+    if data:
+        df = pd.DataFrame(data)
+        df.to_excel("playlists_results.xlsx", index=False)
+        print("Spreadsheet generated: playlist_results.xlsx")
+        
+        #average Pattern Distance grouped by LH_filename and Method
+        grouped_df = df.groupby(['LH_filename', 'Method'])['Pattern_Distance'].mean().unstack()
 
-    #create historgam
-    grouped_df.plot(kind='bar', figsize=(10, 6))
-    plt.title('Media di Pattern Distance per LH_filename e Method')
-    plt.xlabel('LH_filename')
-    plt.ylabel('Media di Pattern Distance')
-    plt.xticks(rotation=45, ha='right')
-    plt.tight_layout()
+        #create historgam
+        ax = grouped_df.plot(kind='bar', figsize=(10, 6))
+        plt.title('Media di Pattern Distance per LH_filename e Method')
+        plt.xlabel('LH_filename')
+        plt.ylabel('Media di Pattern Distance')
+        plt.xticks(rotation=45, ha='right')
+        plt.tight_layout()
 
-    #save graph as PNG
-    plt.savefig('avg_PD_method.png')
+        # Add value labels on top of each bar
+        for p in ax.patches:
+            ax.annotate(str(round(p.get_height(), 2)), (p.get_x() + p.get_width() / 2., p.get_height()), ha='center', va='center', xytext=(0, 10), textcoords='offset points')
+
+        #save graph as PNG
+        plt.savefig('avg_PD_method.png')
 
 
 def main():
