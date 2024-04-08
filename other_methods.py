@@ -1,5 +1,6 @@
 from step1 import feature_names_to_remove, check_listening_history_file
 from step2 import compute_optimal_solution_indexes, retrieve_optimal_solution_songs, compute_best_history_patterns, compute_listening_history_patterns
+from listening_history_manager import change_credentials
 from evaluation import retrieve_playlists
 import math
 import pickle
@@ -16,11 +17,16 @@ def get_rec_1_recommendations(listening_history,prefix_name,day_name, spotify):
         generated_playlist = generated_playlists.get((prefix_name,day_name,period,"our_method"), None)
         if generated_playlist:
             playlist_length = len(generated_playlist[0])
+        i = 1
         for song in songs:
+            if i == 12:
+                spotify = change_credentials()
+                i = 1
             print(f"Getting REC-1 recommendation for song '{song['id']}'")
             recommendation = spotify.recommendations(seed_tracks=[song['id']], limit=1).get('tracks')[0]
             if recommendation['id'] not in list(set(playlist)):
                 playlist.append(recommendation['id'])
+                i += 1
                 if playlist_length == len(playlist):
                     playlists[period] = playlist
                     break
@@ -42,6 +48,7 @@ def get_rec_2_recommendations(listening_history,prefix_name, day_name, spotify):
         generated_playlist = generated_playlists.get((prefix_name,day_name,period,"our_method"), None)
         if generated_playlist:
             playlist_length = len(generated_playlist[0])
+        j = 1
         for i, song in enumerate(songs):
             if i == 0: 
                 track_ids = [song, songs[i + 1]]
@@ -49,10 +56,15 @@ def get_rec_2_recommendations(listening_history,prefix_name, day_name, spotify):
                 track_ids = [songs[i - 1], song]
             else:
                 track_ids = [songs[i - 1], song, songs[i + 1]]
+            
+            if j == 12:
+                spotify = change_credentials()
+                j = 1
             print(f"Getting REC-2 recommendation for songs {[track['id'] for track in track_ids]}")
             recommendation = spotify.recommendations(seed_tracks=[track['id'] for track in track_ids], limit=1).get('tracks')[0]
             if recommendation['id'] not in list(set(playlist)):
                 playlist.append(recommendation['id'])
+                j += 1
                 if playlist_length == len(playlist):
                     playlists[period] = playlist
                     break
