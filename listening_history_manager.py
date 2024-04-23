@@ -1,11 +1,152 @@
 import pickle
 from spotipy.oauth2 import SpotifyOAuth
 import spotipy
-from datetime import datetime
+from datetime import datetime, timedelta
 import math
 import random
 import os
 from custom_cache_handler import CustomCacheFileHandler
+import pytz #convert Spotify's time zone to the current one
+import csv
+import json
+from tzlocal import get_localzone #get current time zone
+feature_names_to_remove = ["uri", "track_href", "analysis_url", "type", "duration_ms"] #track features not needed for clustering
+feature_names_1 = ['Acousticness','Danceability','Energy','Instrumentalness','Key','Liveness','Loudness','Mode','Speechiness','Tempo','Time_signature','Valence','TrackID']
+keys_ordering =  ['danceability', 'energy', 'key', 'loudness', 'mode', 'speechiness', 'acousticness', 'instrumentalness', 'liveness', 'valence', 'tempo', 'id', 'time_signature']
+
+#convert the "StreamingHistory.json" file provided by the user in a list of dictionaries.
+def csv_to_dict(csv_file):
+    data = []
+    try:
+        if os.path.isdir(csv_file):
+            for file in os.listdir(csv_file):
+                file_path = os.path.join(csv_file, file)
+                if os.path.isfile(file_path) and file_path.endswith(".json"):
+                    with open(file_path, 'r') as file:
+                        json_data = json.load(file)
+                        for song_data in json_data:
+                            data.append(song_data)
+        else:
+            with open(csv_file, 'r') as file:
+                reader = csv.reader(file, delimiter=';')
+                keys = next(reader)  
+                for row in reader:
+                    data.append(dict(zip(keys, row)))
+    except Exception:
+        data = []
+        print(f"An error occurred while trying to load data from file {csv_file}.")
+    else:
+        if data:
+            data = filter_listening_history_file(data)
+            print(f"Succesfully filtered the listening history: {csv_file}")
+
+    return data
+
+
+def check_features(tracks, feature_names):
+    all_features = True
+    feature_list = []
+
+    for track in tracks:
+        features_track = {}
+        for feature_name in feature_names:
+            if feature_name == 'speechness':
+                features_track['speechiness'] = track.get(feature_name, None)
+                if not features_track['speechiness']:
+                    all_features = False
+                    break
+            elif feature_name == 'TrackID':
+                features_track['id'] = track.get(feature_name, None)
+                if not features_track['id']:
+                    all_features = False
+                    break
+            else:
+                features_track[feature_name.lower()] = track.get(feature_name, None)
+                if not features_track[feature_name.lower()]:
+                    all_features = False
+                    break
+
+        if not all_features:
+            feature_list = []
+            break
+        else:
+            feature_list.append(features_track)
+
+    return all_features, feature_list
+
+#get the track features needed in the dynamic programming algorithm
+def get_features(tracks, spotify):
+    if isinstance(tracks[0], str):
+        try:
+            with open("data/all_features.bin", "rb") as file:
+                all_features = pickle.load(file)
+            
+            feature_list = []
+            for track in tracks:
+                for feature in all_features:
+                    if feature['id'] == track:
+                        feature_list.append(feature)
+                        break
+            if len(feature_list) == len(tracks):
+                return feature_list
+        except Exception:
+            pass
+        
+        ids = tracks
+    else:
+        all_features, feature_list = check_features(tracks, feature_names_1)
+        if not all_features:
+            if tracks[0].get('track', None):
+                ids = [track['track']['id'] for track in tracks]
+            elif tracks[0].get('TrackID', None):
+                ids = [track['TrackID'] for track in tracks]
+            else:
+                ids = [track['id'] for track in tracks]
+        else:
+            feature_list = [{key: track[key] for key in keys_ordering} for track in feature_list]
+            return feature_list
+    
+    if len(ids) > 50:
+       sublists = [ids[i:i+50] for i in range(0, len(ids), 50)]
+       features = [] 
+       for sublist in sublists:
+           features.extend(spotify.audio_features(tracks=sublist))
+    else:
+        features = spotify.audio_features(tracks=ids)
+    feature_list = []
+    for feature in features:
+        if feature:
+            track_features = feature.get('id', None)
+            if track_features:
+                final_features = dict(filter(lambda item: item[0] not in feature_names_to_remove, feature.items()))
+                feature_list.append(final_features)
+
+    return feature_list
+
+
+def get_tracks(songs, timestamps, spotify):
+    sublists = [songs[i:i+50] for i in range(0, len(songs), 50)]
+    timestamp_sublists = [timestamps[i:i+50] for i in range(0, len(timestamps), 50)]
+
+    songs = []
+    for i,sublist in enumerate(sublists):
+        while True:
+            try:
+                print(f"Retrieving song data for sublist #{i+1}/{len(sublists)}:")
+                track_ids = [track['TrackID'] for track in sublist]
+                tracks = spotify.tracks(track_ids)['tracks']
+                if timestamp_sublists:
+                    for j, track in enumerate(tracks):
+                        track['endTime'] = timestamp_sublists[i][j]
+                
+                songs.extend(tracks)
+                spotify = change_credentials()
+            except Exception:
+                spotify = change_credentials()
+            else:
+                break
+    return songs
+
 
 def compute_recently_played_songs(spotify):
     #try to load the accumulated listening history (spotify API only allows to retrieve the last 50 songs of the listening history)
@@ -15,7 +156,15 @@ def compute_recently_played_songs(spotify):
     except FileNotFoundError:
         recently_played_songs = {'items': []}
 
-    existing_song_keys = {(item['track']['id'], item['played_at']) for item in recently_played_songs['items']}
+    existing_song_keys = set()
+    for item in recently_played_songs['items']:
+        timestamp = datetime.strptime(item['played_at'], "%Y-%m-%dT%H:%M:%S.%fZ")
+        timestamp = pytz.utc.localize(timestamp)
+        timestamp = timestamp.astimezone(get_localzone())
+        item['played_at'] = timestamp
+        key = (item['track']['id'], item['played_at'])
+        existing_song_keys.add(key)
+
 
     #get the last 50 songs in the listening history and keep only the ones that have not been stored yet
     new_songs = [song for song in spotify.current_user_recently_played()['items'] if (song['track']['id'], song['played_at']) not in existing_song_keys]
@@ -56,9 +205,31 @@ def filter_listening_history_file(csv_data):
     valid_items = []
     for item in csv_data:
         try:
-            item['endTime'] = datetime.strptime(item['endTime'], "%Y-%m-%d %H:%M")
+            if item.get('date', None) and item.get('datetime', None):
+                date_str = item['date']
+                datetime_str = item['datetime']
+                try:
+                    date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+                except ValueError:
+                    date_obj = datetime.strptime(date_str, "%d/%m/%Y")
+
+                time_obj = datetime.strptime(datetime_str, "%H:%M:%S").time()
+                combined_datetime = datetime.combine(date_obj, time_obj)
+                item['endTime'] = combined_datetime
+                item['TrackID'] = item['track_id']
+                item['artistName'] = item['artist_name']
+                item['trackName'] = item['track_name']
+            elif item.get('endTime', None):
+                item['endTime'] = datetime.strptime(item['endTime'], "%Y-%m-%d %H:%M")
+                item['endTime'] = item['endTime'] - timedelta(milliseconds=int(item['msPlayed']))
+            elif item.get('ts', None):
+                timestamp = datetime.fromisoformat(item['ts'].rstrip('Z'))
+                timestamp = pytz.utc.localize(timestamp)
+                timestamp = timestamp.astimezone(get_localzone())
+                item['endTime'] = timestamp
+                item['TrackID'] = item['spotify_track_uri'].split(':')[-1]
             valid_items.append(item)
-        except ValueError:
+        except Exception:
             csv_data.remove(item)
     
     recently_played_songs = sorted(valid_items, key=lambda x: x['endTime'], reverse=True)
@@ -68,8 +239,13 @@ def filter_listening_history_file(csv_data):
         current_song = recently_played_songs[i]
         previous_song = recently_played_songs[i - 1]
         
-        listen_percentage = math.floor(100 * (int(current_song['msPlayed']) / int(current_song['msDuration'])))
-        if current_song['TrackID'] != previous_song['TrackID'] and listen_percentage >= 50:
+        listen_percentage = 0
+        seconds_listened = 0
+        try:
+            listen_percentage = math.floor(100 * (int(current_song['msPlayed']) / int(current_song['msDuration'])))
+        except KeyError:
+            seconds_listened = (previous_song['endTime'] - current_song['endTime']).total_seconds()
+        if current_song['TrackID'] != previous_song['TrackID'] and (listen_percentage >= 50 or seconds_listened >= 30):
             unique_songs.append(current_song)
 
     recently_played_songs = unique_songs
@@ -79,187 +255,187 @@ def filter_listening_history_file(csv_data):
 credentials_dicts = {
     'nignebotro@gufum.com': [
         {
-            'client_id':'5d847817e3124f73915e4cb87add556f',
-            'client_secret':'38db16b27bf24c82a30854c444afa305',
+            'client_id':'9d62fabb415c4acb8bf0ce9d2012f0ed',
+            'client_secret':'7b4b7ebf1e3e4b87ae74ca86d295a109',
             'redirect_uri':'https://www.google.com'
         },
 
         {
-            'client_id':'29dc0e16554e46c5a3300033b3b41ba6',
-            'client_secret':'0103646b260b4d8ea62d41dbe3a6893f',
+            'client_id':'552bd384190241f6be465fba62958584',
+            'client_secret':'8856fade04f04e7b9afd04b3ccf4a5f8',
             'redirect_uri':'https://www.google.com'
         },
 
         {
-            'client_id':'9ad3b2d2c4224269b45bed163a8d33c5',
-            'client_secret':'e1d031337eb0428ca4d73e5648ecc883',
+            'client_id':'c06d6c2e484847c1bd7f87a36d06af27',
+            'client_secret':'bfef3b193c4240a9867d5029dea3ec52',
             'redirect_uri':'https://www.google.com'
         },
 
         {
-            'client_id':'25fd5dd8887c47b8ab89ff8f5ac01e07',
-            'client_secret':'0f1009e7645a488c87e003a903326c0b',
+            'client_id':'32459636d0224002b3fd2a218c70f6cb',
+            'client_secret':'1e6ddd7e26f14872ab3bdaa6c71ed7d7',
             'redirect_uri':'https://www.google.com'
         },
 
         {
-            'client_id':'8f9d68c156854126bea2c193a509a6d1',
-            'client_secret':'3d30eafe0d0c45d085c7cb62046e7742',
+            'client_id':'a2728620554d41f28f89d83464f40568',
+            'client_secret':'50efcac4ddd34b199e17eb0f284309c7',
             'redirect_uri':'https://www.google.com'
         }
     ],
     'minin11613@mnsaf.com': [
         {
-            'client_id':'9d833544903241a89eb3dc527c04a65b',
-            'client_secret':'1a9f316213684427903504abcb6f160d',
+            'client_id':'007f100ccec7499e893a79d2f52daf49',
+            'client_secret':'c4d9b12f72ea45aea2a2580fc10e62f5',
             'redirect_uri':'https://www.google.com'
         },
 
         {
-            'client_id':'876feec8313248339c441b74afc8881e',
-            'client_secret':'c0b474dff1ad4be1a3b39d0b7aa52388',
+            'client_id':'fc8a585f120149a489ad064228a3f2f2',
+            'client_secret':'8777e71a2732465785c25482d54d62f7',
             'redirect_uri':'https://www.google.com'
         },
 
         {
-            'client_id':'31a1733a1bf9470798d6dbfd0d8def4b',
-            'client_secret':'3b36474f1742475d9e372144127a382e',
+            'client_id':'a446f7bd71744214a246abfd8ed98a70',
+            'client_secret':'360ddc5d2ea3408e85d3360d09bfc598',
             'redirect_uri':'https://www.google.com'
         },
 
         {
-            'client_id':'23e49ac127204c91a1447551caa6aecc',
-            'client_secret':'3ed7aa7843b44233bd000f0239278fcc',
+            'client_id':'3d32ae4a3d3b45d6bbbc5a128b37a9af',
+            'client_secret':'f0045935b87141cfb7d9eab2ad466e2b',
             'redirect_uri':'https://www.google.com'
         },
 
         {
-            'client_id':'43271199d09d4d3da4f6154b46cb895a',
-            'client_secret':'385cb2f396614e018f1963cdd34a88ad',
+            'client_id':'40b31a065f944292881e237d5680781f',
+            'client_secret':'c1ef3231b08443c79db933d3f8166a65',
             'redirect_uri':'https://www.google.com'
         }
     ],
     'muydihispu@gufum.com': [
         {
-            'client_id':'dab76c36dc3b4360aea8b0399c8b63ce',
-            'client_secret':'f7b217c027a6484eb0ee4fd739f46db2',
+            'client_id':'c8afc2f6901f41f0877d6374efda873b',
+            'client_secret':'4d77fa6ed3c2411eb45ef04a31b37f8c',
             'redirect_uri':'https://www.google.com'
         },
 
         {
-            'client_id':'6f62643136294c08a9b2d39efdcfd3e4',
-            'client_secret':'5212455fa41c43d4b46166ee2af46782',
+            'client_id':'2b40a2cfd4e94c6da2142f312b8763b1',
+            'client_secret':'87099b74baf147f6b7dd652d234d636d',
             'redirect_uri':'https://www.google.com'
         },
 
         {
-            'client_id':'20b5136836584691ac30c16b726b7084',
-            'client_secret':'47d0b1d1e1d142ec91c4abe9d5e62157',
+            'client_id':'0bb713ee0cde4568aa7b9c0bf459f165',
+            'client_secret':'5673d3a0ac034ad1b41d8f232817c0ab',
             'redirect_uri':'https://www.google.com'
         },
 
         {
-            'client_id':'e503cd0074164a7896dab6102a3cd629',
-            'client_secret':'506c9dafe0164dd69fd48337deea7cf4',
+            'client_id':'d03a9d00752f41d18c0d054e7d98ff76',
+            'client_secret':'e533893f1ddb4d1592026f3fc68323b6',
             'redirect_uri':'https://www.google.com'
         },
 
         {
-            'client_id':'23c8fac0463f4de7a0cc1e1e502674da',
-            'client_secret':'0af031f96a314ec0bda57736d19c1c6e',
+            'client_id':'7abc15cb1ab54848baf48861d1b42ee2',
+            'client_secret':'4604cc8214424548ba9856cc3f6ec8f0',
             'redirect_uri':'https://www.google.com'
         }
     ],
     'alessandro.franceschini.2002@gmail.com': [
         {
-            'client_id':'88af6dfe58a24ae5afd36cd35cff978c',
-            'client_secret':'84202b1ec08442dea6899e16214d8242',
+            'client_id':'a4bd7c65993740ecaeec5332dba20dcd',
+            'client_secret':'6aa12d4dc2234f3089d4f356e4138aa3',
             'redirect_uri':'https://www.google.com'
         },
 
         {
-            'client_id':'69dddf2b92de442ab9af0b8910c36b01',
-            'client_secret':'eb9d3663520446e99ca89ce0ca8da4ae',
+            'client_id':'172f44501fcb4d8dad500a09c3abb636',
+            'client_secret':'95cbd842ac784dff84fe3ff6616e828f',
             'redirect_uri':'https://www.google.com'
         },
 
         {
-            'client_id':'f95642ced4744ba89b32c0cb22629c0e',
-            'client_secret':'0e1db2d43493486c97acb6ad07db3a36',
+            'client_id':'e96d9d3571294a529add13efb8786a4b',
+            'client_secret':'172c6f294f614f3f8bd777678db1eaa2',
             'redirect_uri':'https://www.google.com'
         },
 
         {
-            'client_id':'149c7e56cf274adcaf2e57da5641f84c',
-            'client_secret':'7ed5a6a8c6f449f099d3cc3cd62fba6c',
+            'client_id':'f0f0c1bdb5cb400991b4cc44996ab289',
+            'client_secret':'2767fe8fd612450599278f7758e14399',
             'redirect_uri':'https://www.google.com'
         },
 
         {
-            'client_id':'b45b91203a334848ae2a6895e695fb56',
-            'client_secret':'c53c8201ba8447f0b559e62ef142f310',
+            'client_id':'8c5742f6d059418d8adead8705d8e24c',
+            'client_secret':'db729bbe8109466c86c886335d8b0ff3',
             'redirect_uri':'https://www.google.com'
         }
     ],
     'difyekilmu@gufum.com': [
         {
-            'client_id':'ea826b08362f43f791935bbc2894243e',
-            'client_secret':'cce4a1c5e3c54e78ba11d4a314dd0d96',
+            'client_id':'633e1de56ab84617af1e152fc34b40d5',
+            'client_secret':'84a1ad24cb5b4ccc988f873e0c38f461',
             'redirect_uri':'https://www.google.com'
         },
 
         {
-            'client_id':'9a6e664c3a75401eb52df154f4fa00a6',
-            'client_secret':'03b276b0b0144c39941aa886f42d7f4c',
+            'client_id':'1f5b9af30e6a49a49fb098c2e3e585d7',
+            'client_secret':'29de0cd2eee14892acc4bbbcaac911a5',
             'redirect_uri':'https://www.google.com'
         },
 
         {
-            'client_id':'bb0f296a99d6424bbfe75e70fc3ddbbf',
-            'client_secret':'b53c75a4c1ec4d0db17d511b481ab2e2',
+            'client_id':'2dcab326b844489ba8ef811b06edf78e',
+            'client_secret':'80707abba1b74fd7a16666a61d719c03',
             'redirect_uri':'https://www.google.com'
         },
 
         {
-            'client_id':'21af97baf6be400a98b4ff51ba49dd5d',
-            'client_secret':'52ce1b28572945fdae471bfdcfc7310d',
+            'client_id':'8a4c2beee6ca471794344d5e86083e0c',
+            'client_secret':'020f990fbf614acead08082cfd6c8586',
             'redirect_uri':'https://www.google.com'
         },
 
         {
-            'client_id':'37f13d9a346b4acd9d2e0bd5b95f8db6',
-            'client_secret':'0695d88adab142deb031de57c5c162a0',
+            'client_id':'6ef3a7edf1014075996000b83e935bf4',
+            'client_secret':'3505d76c2f0440e3ab31ce5bf7f1f0f7',
             'redirect_uri':'https://www.google.com'
         }
     ],
     'sugnehomle@gufum.com': [
         {
-            'client_id':'639e6f779c3b413e80c81ec746924b6a',
-            'client_secret':'2e11db04ceac410e843037f1b43c2a6d',
+            'client_id':'bda1b749cd5a479ea17d2af261e3b03b',
+            'client_secret':'f37c24c948674177a7dc69bf0cb555a5',
             'redirect_uri':'https://www.google.com'
         },
 
         {
-            'client_id':'4f06b63a0587467ca389b0579e35a700',
-            'client_secret':'af61e7d860f946ec8f06d1ff211e92ac',
+            'client_id':'6a53502269e247cca9ad9267de93305c',
+            'client_secret':'4047c273f59a4be1acd8d454004163a9',
             'redirect_uri':'https://www.google.com'
         },
 
         {
-            'client_id':'dfba50cb07044a9880ed53c270cd2345',
-            'client_secret':'9113f66783884e3cb83949a8f5d4fda5',
+            'client_id':'887eb5928c0146b3ae441946cac55d5d',
+            'client_secret':'21dd50ba2769488380762aea27ba5d3b',
             'redirect_uri':'https://www.google.com'
         },
 
         {
-            'client_id':'e51360737d63433ebe0b2fb6b151a615',
-            'client_secret':'21aba6385f46403282d516fcd2524974',
+            'client_id':'c60ab67926464bbdaaaac0d6e29968ab',
+            'client_secret':'dd11582b91b443c6a6adefbd788ad8a5',
             'redirect_uri':'https://www.google.com'
         },
 
         {
-            'client_id':'6ade82872def40a5bc047abb641f2b9e',
-            'client_secret':'2a7e2611f7114e2a9cc55bcd835395de',
+            'client_id':'036fb15578744abc9cc08c940e373e6b',
+            'client_secret':'f88197982a724e959507e0631a4aed6e',
             'redirect_uri':'https://www.google.com'
         }
     ],
@@ -637,7 +813,7 @@ credentials_dicts = {
     ],
     'ratrokelti@gufum.com': [
         {
-            'client_id':'9726d6e0aae544248849b2b9a587a546',
+            'client_id':'',
             'client_secret':'6e38b78580a741a7932c893cb831cd0e',
             'redirect_uri':'https://www.google.com'
         },
@@ -655,13 +831,13 @@ credentials_dicts = {
         },
 
         {
-            'client_id':'f0acf2c298d84f51a02e3a61d7c6b1b4',
+            'client_id':'',
             'client_secret':'7961ae28c7b141e583789a03aff922a7',
             'redirect_uri':'https://www.google.com'
         },
 
         {
-            'client_id':'560a43d92ef240bfb6a8bebcb485db45',
+            'client_id':'',
             'client_secret':'4f7883b408f3463983d43f4e6135d122',
             'redirect_uri':'https://www.google.com'
         }
@@ -1083,7 +1259,7 @@ credentials_dicts = {
         },
 
         {
-            'client_id':'dbfb12002c22485883dbdc0966ce4d97',
+            'client_id':'',
             'client_secret':'a107ac58d524487aa3aba806cd4477a7',
             'redirect_uri':'https://www.google.com'
         },
@@ -1537,7 +1713,7 @@ credentials_dicts = {
     'gifyovadru@gufum.com': [
         {
             'client_id':'a4d4868d932e4f199ad6cad92c3c498f',
-            'client_secret':'a4d4868d932e4f199ad6cad92c3c498f',
+            'client_secret':'d766c88e87c9408ba87c6df1bea2a383',
             'redirect_uri':'https://www.google.com'
         },
 
@@ -1815,13 +1991,13 @@ credentials_dicts = {
     ],
     'ramlozimlu@gufum.com': [
         {
-            'client_id':'3d8edc71e64c4dc2a7bdaffadde65b7f',
+            'client_id':'',
             'client_secret':'d2ec8821094a406b9fd02d6173c25ba1',
             'redirect_uri':'https://www.google.com'
         },
 
         {
-            'client_id':'3590979eb5354bf98347e6af395e99d4',
+            'client_id':'',
             'client_secret':'a77ea50a9f214acf97e20502bd0f2de8',
             'redirect_uri':'https://www.google.com'
         },
@@ -1970,7 +2146,7 @@ credentials_dicts = {
     ],
     'nadrazukno@gufum.com': [
         {
-            'client_id':'9dada1dc66994c32bf4b232cbb3830c3',
+            'client_id':'',
             'client_secret':'68cc4f06512f450c9e3a9e3ffb021c11',
             'redirect_uri':'https://www.google.com'
         },
@@ -1994,7 +2170,7 @@ credentials_dicts = {
         },
 
         {
-            'client_id':'a038b6e86340461dab5398c11d611703',
+            'client_id':'',
             'client_secret':'6c1be70115f3490ab98a52d11c7588ae',
             'redirect_uri':'https://www.google.com'
         }
@@ -2184,6 +2360,141 @@ credentials_dicts = {
             'client_secret':'fe7c7a2a07304556927de2ccf5b2a89e',
             'redirect_uri':'https://www.google.com'
         }
+    ],
+    'mardobolmo@gufum.com': [
+        {
+            'client_id':'9ed1fa2af55740ad9c79f1acbe348fad',
+            'client_secret':'f78e1661cfd642cdba2bcacddaa3015c',
+            'redirect_uri':'https://www.google.com'
+        },
+        {
+            'client_id':'fc554f76e9f54c24b6e5205df9b6e19b',
+            'client_secret':'a56e1a6877504bdf8bc9ca6af22a911f',
+            'redirect_uri':'https://www.google.com'
+        },
+        {
+            'client_id':'7e254cca63734d5fb4263630e46c9001',
+            'client_secret':'68d098d187cf4a0e8c455a9a5e75e61a',
+            'redirect_uri':'https://www.google.com'
+        },
+        {
+            'client_id':'75dc3480f47944f6bd3945349424f1f4',
+            'client_secret':'ced89367c64e46a99797668b52b49351',
+            'redirect_uri':'https://www.google.com'
+        },
+        {
+            'client_id':'da5738fc5b964cfaa86838eb0d52cfee',
+            'client_secret':'21a390bf63804827a2e800e92ae96b13',
+            'redirect_uri':'https://www.google.com'
+        },
+    ],
+    'dotrogemlo@gufum.com': [
+        {
+            'client_id':'b353535fc5ac47f7a5e9266e49df3c20',
+            'client_secret':'b47b71e6453d4200ba1e2964c3585961',
+            'redirect_uri':'https://www.google.com'
+        },
+        {
+            'client_id':'107ea80c9e95448ca8fc3b46597f4131',
+            'client_secret':'1fce3dac48ca48f0adfc7fcf4c3f8caa',
+            'redirect_uri':'https://www.google.com'
+        },
+        {
+            'client_id':'08a267de2e3f49adb92a7db4a591e275',
+            'client_secret':'1688897109be47df88edebce7b2f3c79',
+            'redirect_uri':'https://www.google.com'
+        },
+        {
+            'client_id':'0ccdc810b6a6405c944b99ce6b30419d',
+            'client_secret':'de06df99f2994c438a2dc23f6ad9d151',
+            'redirect_uri':'https://www.google.com'
+        },
+        {
+            'client_id':'2f1923210e974feab528814ad1c686a1',
+            'client_secret':'69cbb89772ea4860b8cb1601d8aba1dd',
+            'redirect_uri':'https://www.google.com'
+        },
+    ],
+    'hagnehepse@gufum.com': [
+        {
+            'client_id':'f0a28cabcc7845cca85fe743dd94622c',
+            'client_secret':'464e27460eea4737848657ad80245380',
+            'redirect_uri':'https://www.google.com'
+        },
+        {
+            'client_id':'0384e1049ecb44b1a2fe8d218550d19f',
+            'client_secret':'e2bc6d4774bd493ba5c39140be505273',
+            'redirect_uri':'https://www.google.com'
+        },
+        {
+            'client_id':'69337a9f9c4d4f1f925e2790c52c6e81',
+            'client_secret':'6d83ea3faada49a293598201361ae46d',
+            'redirect_uri':'https://www.google.com'
+        },
+        {
+            'client_id':'31ccdbae7d1d4fac8d124cbf9547b1fb',
+            'client_secret':'f3ec82f5d3664a8f85360c21819e326f',
+            'redirect_uri':'https://www.google.com'
+        },
+        {
+            'client_id':'0c2fefb53e834081a3f06f13ad3bb48a',
+            'client_secret':'85f93ee75b9447eaa230c1f35c7778e1',
+            'redirect_uri':'https://www.google.com'
+        },
+    ],
+    'nirtitofyi@gufum.com': [
+        {
+            'client_id':'630ac7f0aa7947438f8c973a27f0ff1e',
+            'client_secret':'fcd145cffbaa4d29b8dabb5dc89d2f38',
+            'redirect_uri':'https://www.google.com'
+        },
+        {
+            'client_id':'e2dd21b48264435b839aa374405e93cd',
+            'client_secret':'84c7dea2eb4e40528334c7c948d7d4b4',
+            'redirect_uri':'https://www.google.com'
+        },
+        {
+            'client_id':'d749ba7b7e4d4a7f95f524f07b911ce0',
+            'client_secret':'226edb4a08a54dd4bff810ad6667430c',
+            'redirect_uri':'https://www.google.com'
+        },
+        {
+            'client_id':'978b9b59b9424df2bb687b2f5fd86ae0',
+            'client_secret':'f0326628c79342fcb75ea90201ff16b1',
+            'redirect_uri':'https://www.google.com'
+        },
+        {
+            'client_id':'b75be2e2fcd54c02924be1c67e9a444d',
+            'client_secret':'d5db6fe83f94431f99aaba41a86561a5',
+            'redirect_uri':'https://www.google.com'
+        }
+    ],
+    'rirzocorku@gufum.com': [
+        {
+            'client_id':'0f34031d6cfc4472a71509b26adbe493',
+            'client_secret':'c0c681ede9054a23afc3385f057f1bfe',
+            'redirect_uri':'https://www.google.com'
+        },
+        {
+            'client_id':'6929483ecd5e4239b95d5829ac758ac5',
+            'client_secret':'6dabab9397374413ab78d48ba4fe42a0',
+            'redirect_uri':'https://www.google.com'
+        },
+        {
+            'client_id':'f98369657cb648ab924e6ebcd4416f97',
+            'client_secret':'137df9b312a5450099d021ca68ce7530',
+            'redirect_uri':'https://www.google.com'
+        },
+        {
+            'client_id':'9e64d1e9944f4117b703e5cf6bf162e2',
+            'client_secret':'8848fa1a4dfd410abff5f8ffceb99ebd',
+            'redirect_uri':'https://www.google.com'
+        },
+        {
+            'client_id':'0e0261ccd9624bfa8ebaa1da6022c4bd',
+            'client_secret':'1037c788f34148c8846a5a966fde68c4',
+            'redirect_uri':'https://www.google.com'
+        }
     ]
 }
 
@@ -2204,17 +2515,80 @@ def change_credentials():
             custom_cache_handler = CustomCacheFileHandler(credentials_index=credentials_index_complete)
             print_in_box(f"ACCOUNT EMAIL: {random_account}")
             print_in_box(f"ACCOUNT CLIENT-ID: {random_credentials['client_id']}")
+            with open("cache/credentials.txt", "w") as file:
+                file.write(random_credentials['client_id'])
             spotify = spotipy.Spotify(auth_manager=SpotifyOAuth(**random_credentials, scope="playlist-modify-private user-read-recently-played", cache_handler=custom_cache_handler))
-            user_id = spotify.current_user()['id']
-        except spotipy.oauth2.SpotifyOauthError:
-            path = f"cache/.cache{credentials_index_complete}"
-            if os.path.exists(path):
-                os.remove(path)
+            prova = spotify.current_user()['id']
+        except spotipy.exceptions.SpotifyException as e:
+            if e.http_status == 429:
+                with open("data/errors.txt", "a") as file:
+                    retry_after = int(e.headers.get('Retry-After'))
+                    file.write(random_credentials['client_id'] + retry_after + "\n")
             continue
-        except spotipy.exceptions.SpotifyException:
+        except spotipy.oauth2.SpotifyOauthError:
             continue
         else:
             break
     
     return spotify
 
+def update_all_cache_files():
+    with open("data/errors.txt", "a") as file:
+        for email, apps in credentials_dicts.items():
+            for app in apps:
+                account_index = list(credentials_dicts.keys()).index(email)
+                credentials_index = apps.index(app)
+                credentials_index_complete = account_index * len(apps) + credentials_index
+                custom_cache_handler = CustomCacheFileHandler(credentials_index=credentials_index_complete)
+                print_in_box(f"ACCOUNT EMAIL: {email}")
+                print_in_box(f"ACCOUNT CLIENT-ID: {app['client_id']}")
+                try:
+                    spotify = spotipy.Spotify(auth_manager=SpotifyOAuth(**app, scope="playlist-modify-private user-read-recently-played", cache_handler=custom_cache_handler))
+                    user_id = spotify.search("ligabue")
+                    # Continua la gestione della risposta...
+                except spotipy.SpotifyException as e:
+                    if e.http_status == 429:
+                        retry_after = int(e.headers.get('Retry-After'))
+                        print(f"Too Many Requests. Retrying after {retry_after} seconds...")
+                        continue
+                    else:
+                        print("Errore:", e)
+                        file.write(app['client_id'])
+                        file.write("\n")
+                        file.write(str(e))
+                        file.write("\n")
+                        file.write("\n")
+                        continue
+                except Exception as e:
+                    print(e)
+                    file.write(app['client_id'])
+                    file.write("\n")
+                    file.write(str(e))
+                    file.write("\n")
+                    file.write("\n")
+                    continue
+
+
+def get_recommendations(spotify=change_credentials(), seed_tracks=None, limit=100, kwargs=None):  
+    if kwargs:
+        key = tuple(seed_tracks), tuple(kwargs.items())
+    else:
+        key = tuple(seed_tracks)
+
+    with open("data/stored_recommendations.bin", "rb") as file:
+        try:
+            while True:
+                recommendation = pickle.load(file)
+                if recommendation.get(key, None):
+                    print("Retrieved recommentations from local storage")
+                    return recommendation[key]
+        except (EOFError):
+            pass
+    
+    ret = spotify.recommendations(seed_tracks=seed_tracks, limit=limit, kwargs=kwargs)
+    with open("data/stored_recommendations.bin", "ab") as file:
+        recommendations_dict = {key: ret}
+        pickle.dump(recommendations_dict, file)
+    print("Retrieved recommentations from Spotify API")
+
+    return ret 
