@@ -2495,6 +2495,33 @@ credentials_dicts = {
             'client_secret':'1037c788f34148c8846a5a966fde68c4',
             'redirect_uri':'https://www.google.com'
         }
+    ],
+    'rapsimigna@gufum.com': [
+        {
+            'client_id':'e81b79f4862946c59e2c72bad17235e0',
+            'client_secret':'db0ab8a382da41e0ab5de262c43ef2b1',
+            'redirect_uri':'https://www.google.com'
+        },
+        {
+            'client_id':'8775978c7a3e480a84610112eb91aed8',
+            'client_secret':'e0dc8b2ea59649578d51d813df9e78bf',
+            'redirect_uri':'https://www.google.com'
+        },
+        {
+            'client_id':'e42c742956224ade9b73abf00358a757',
+            'client_secret':'0db478742c9140639ede3528a0bf2b9d',
+            'redirect_uri':'https://www.google.com'
+        },
+        {
+            'client_id':'ca4f5149365e4ab19979760ebbccdb49',
+            'client_secret':'beb150148d4f4bb0b2e1fd0abf3c4738',
+            'redirect_uri':'https://www.google.com'
+        },
+        {
+            'client_id':'0da408eb8c9a4c33a3d3d10f236789ce',
+            'client_secret':'d3c130d21f5b4c2990039bb9a44841b6',
+            'redirect_uri':'https://www.google.com'
+        }
     ]
 }
 
