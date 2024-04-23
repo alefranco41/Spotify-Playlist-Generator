@@ -1,10 +1,11 @@
 import pickle
-from step1 import feature_names_to_remove, check_listening_history_file, data_directory, most_similar_song_sets_suffix
+from step1 import check_listening_history_file, data_directory, most_similar_song_sets_suffix
 from scipy.spatial.distance import euclidean #needed in the dynamic programming algorithm
 from datetime import timedelta #manage timestamps of songs in order to compute listening history patterns
 import random #choose a random listening history patterns
 import os
 import sys
+from listening_history_manager import get_features, change_credentials, get_recommendations
 #global variables
 playlist_length = 48
 best_history_patterns_suffix = "_best_history_patterns.bin"
@@ -28,13 +29,7 @@ def retrieve_most_similar_song_set(prefix_name, hour):
 def choose_pattern_with_random_probability(patterns_with_enough_songs, timestamp_key):
     timestamps = [pattern[0][timestamp_key] for pattern in patterns_with_enough_songs]
     probabilities = [1 / (i + 1) for i in range(len(timestamps))]
-    chosen_pattern = random.choices(patterns_with_enough_songs, weights=probabilities, k=1)[0]
-    if len(chosen_pattern) > playlist_length:
-        excess = len(chosen_pattern) - playlist_length
-        start_index = excess // 2
-        end_index = start_index + playlist_length
-        chosen_pattern = chosen_pattern[start_index:end_index]
-    
+    chosen_pattern = random.choices(patterns_with_enough_songs, weights=probabilities, k=1)[0]    
     return chosen_pattern
 
 #if, for a given day and a given hour, no listening history patterns are valid (i.e, if none of the patterns have length greater than playlist_length)
@@ -46,13 +41,6 @@ def overlap_patterns(today_period_patterns, timestamp_key):
         chosen_pattern.extend(pattern)
 
     chosen_pattern.sort(key=lambda x: x[timestamp_key].time())
-
-    if len(chosen_pattern) > playlist_length:
-        excess = len(chosen_pattern) - playlist_length
-        start_index = excess // 2
-        end_index = start_index + playlist_length
-        chosen_pattern = chosen_pattern[start_index:end_index]
-
     return chosen_pattern
 
 #if, for a given day and a given hour, no listening history patterns are valid (i.e, if none of the patterns have length greater than playlist_length
@@ -192,48 +180,41 @@ def compute_listening_history_patterns(periods, timestamp_key):
 
     return history_patterns
 
-#get the track features needed in the dynamic programming algorithm
-def get_features(tracks, spotify):
-    if isinstance(tracks[0], str):
-        ids = tracks
-    else:
-        if tracks[0].get('track', None):
-            ids = [track['track']['id'] for track in tracks]
-        elif tracks[0].get('TrackID', None):
-            ids = [track['TrackID'] for track in tracks]
-        else:
-            ids = [track['id'] for track in tracks]
 
-    features = spotify.audio_features(tracks=ids)
-    feature_list = []
-    for feature in features:
-        if feature:
-            track_features = feature.get('id', None)
-            if track_features:
-                final_features = dict(filter(lambda item: item[0] not in feature_names_to_remove, feature.items()))
-                feature_list.append(final_features)
-
-    return feature_list
 
 #Dynamic programming algotithm that computes, for every playlist pattern, the best song ordering
-def compute_optimal_solution_indexes(history_patterns, playlist_patterns, spotify):
+def compute_optimal_solution_indexes(history_patterns, playlist_patterns):
     optimal_solutions_indexes = {}
 
     for period, playlist in playlist_patterns.items():
         if not history_patterns.get(period, None):
             continue
-        
-        history_pattern = get_features(history_patterns[period], spotify)
+        spotify = change_credentials()
+
+        if len(history_patterns[period]) > 100:
+            history_pattern = []
+            sublists = [history_patterns[period][i:i+100] for i in range(0, len(history_patterns[period]), 100)]
+            
+            for sublist in sublists:
+                # Chiama la funzione get_features con la sotto-lista corrente
+                features = get_features(sublist, spotify)
+                # Aggiungi i risultati alla lista di tutti i risultati
+                history_pattern.extend(features)
+
+        else:
+            history_pattern = get_features(history_patterns[period], spotify)
+
         playlist = get_features(playlist, spotify)
 
         m = len(playlist)
         k = len(history_pattern)
 
-        
-        if  k > m:
-            history_pattern = history_pattern[0:m]
+        if  k > m:    
+            excess = k - m
+            start_index = excess // 2
+            end_index = start_index + k
+            history_pattern = history_pattern[start_index:end_index]
             k = m
-
 
         M = []
         V = []
@@ -252,7 +233,6 @@ def compute_optimal_solution_indexes(history_patterns, playlist_patterns, spotif
                 playlist_pattern_distances = [M[i-1][t] + abs((euclidean([value for value in history_pattern[i-1].values() if not isinstance(value, str)], [value for value in history_pattern[i].values() if not isinstance(value, str)]) - euclidean([value for value in playlist[t].values() if not isinstance(value, str)], [value for value in playlist[j].values() if not isinstance(value, str)]))) for t in range(m)]
                 min_distance = min(playlist_pattern_distances)
                 min_index = playlist_pattern_distances.index(min_distance)
-
                 M_i_th_row.append(distance + min_distance)
                 V_i_th_row.append(min_index)
                     
@@ -273,9 +253,7 @@ def compute_optimal_solution_indexes(history_patterns, playlist_patterns, spotif
             else:
                 duplicate_indexes.insert(0,0)
             vertices_period.insert(0, min_index)
-        
         optimal_solutions_indexes[period] = (vertices_period,duplicate_indexes)
-    
     if not optimal_solutions_indexes:
         print(f"Couldn't run the dynamic programming algorithm for hours {list(playlist_patterns.keys())}")
         sys.exit()
@@ -284,8 +262,10 @@ def compute_optimal_solution_indexes(history_patterns, playlist_patterns, spotif
     return optimal_solutions_indexes
 
 
+
+
 #given the optimal song ordering indexes, retrieve, for every period, the actual song ids
-def retrieve_optimal_solution_songs(optimal_solutions_indexes, playlist_patterns, spotify):
+def retrieve_optimal_solution_songs(optimal_solutions_indexes, playlist_patterns):
     playlists = {}
     
     for period, songs in playlist_patterns.items():
@@ -295,11 +275,11 @@ def retrieve_optimal_solution_songs(optimal_solutions_indexes, playlist_patterns
 
             n_duplicate_indexes = len([index for index in duplicate_indexes if index == 1])
             playlist_length = len(vertices_period)
-            limit = playlist_length + n_duplicate_indexes
-
+            
             playlist = [songs[index]['id'] for index in vertices_period]
             
             print(f"Removing duplicate indexes from the optimal song ordering for period: {period}...")
+            j=0
             for i in range(playlist_length):
                 if i == 0 or i == 1: 
                     track_ids = playlist[0:min(5, len(playlist))]
@@ -309,8 +289,19 @@ def retrieve_optimal_solution_songs(optimal_solutions_indexes, playlist_patterns
                     track_ids = [playlist[max(0, i-2)], playlist[max(0, i-1)], playlist[i], playlist[min(len(playlist) - 1, i+1)], playlist[min(len(playlist) - 1, i+2)]]
 
                 if duplicate_indexes[i]:
+                    j+=1
+                    if j % 10 == 0 or j == 1:
+                        spotify = change_credentials()
+
                     print(f"Getting recommendation for duplicate track '{[playlist[i]]}'")
-                    recommendations = spotify.recommendations(seed_tracks=track_ids, limit=limit).get('tracks')
+                    while True:
+                        try:
+                            recommendations = get_recommendations(spotify=spotify, seed_tracks=track_ids, limit=100).get('tracks')
+                        except Exception:
+                            spotify = change_credentials()
+                        else:
+                            break
+
                     for recommendation in recommendations:
                         if recommendation['id'] not in playlist:
                             playlist[i] = recommendation['id']
@@ -337,7 +328,16 @@ def create_playlists_dict(final_playlist, day_name, history_patterns, prefix_nam
     return playlists
 
 #upload the playlists generated for every period on Spotify
-def create_playlists(playlists, spotify):
+def create_playlists(playlists):
+
+    while True:
+        try:
+            spotify = change_credentials()
+        except Exception:
+            pass
+        else:
+            break
+
     user_id = spotify.current_user()['id']
     for playlist_data, tracks in playlists.items():
         if playlist_data[3] != "our_method":
