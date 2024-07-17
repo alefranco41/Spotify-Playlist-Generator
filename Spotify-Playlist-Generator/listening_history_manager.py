@@ -285,36 +285,32 @@ def filter_listening_history_file(csv_data):
 
 #Spotify application credentials
 credentials_dicts = {
-    'alessandro.franceschini.2002@gmail.com': [
-        {
-            'client_id':'a4bd7c65993740ecaeec5332dba20dcd',
-            'client_secret':'6aa12d4dc2234f3089d4f356e4138aa3',
-            'redirect_uri':'https://www.google.com'
-        },
-
-        {
-            'client_id':'172f44501fcb4d8dad500a09c3abb636',
-            'client_secret':'95cbd842ac784dff84fe3ff6616e828f',
-            'redirect_uri':'https://www.google.com'
-        },
-
-        {
-            'client_id':'e96d9d3571294a529add13efb8786a4b',
-            'client_secret':'172c6f294f614f3f8bd777678db1eaa2',
-            'redirect_uri':'https://www.google.com'
-        },
-
-        {
-            'client_id':'f0f0c1bdb5cb400991b4cc44996ab289',
-            'client_secret':'2767fe8fd612450599278f7758e14399',
-            'redirect_uri':'https://www.google.com'
-        },
-
-        {
-            'client_id':'8c5742f6d059418d8adead8705d8e24c',
-            'client_secret':'db729bbe8109466c86c886335d8b0ff3',
-            'redirect_uri':'https://www.google.com'
-        }
+    '': [
+            {
+                'client_id':'',
+                'client_secret':'',
+                'redirect_uri':''
+            },
+            {
+                'client_id':'',
+                'client_secret':'',
+                'redirect_uri':''
+            }, 
+            {
+                'client_id':'',
+                'client_secret':'',
+                'redirect_uri':''
+            }, 
+            {
+                'client_id':'',
+                'client_secret':'',
+                'redirect_uri':''
+            }, 
+            {
+                'client_id':'',
+                'client_secret':'',
+                'redirect_uri':''
+            }, 
     ]
 }
 
