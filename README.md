@@ -22,9 +22,13 @@ Installation Instructions:
   b) after you have verified the email,  wait about five minutes: Spotify takes time to register your accounts to the Developer Dashboard.
 3) Go to https://developer.spotify.com/dashboard and create up to five application for each Spotify account.
 4) For every application that you create, you have to insert the credentials 'client_id', 'client_secret' and 'redirect_uri' in the dictionary 'credentials_dicts' inside the module 'listening_history_manager'. Each key of 'credentials_dicts' is the email associated to a Spotify account, and each value is a list of (up to five) application credentials associated to that account. The more applications you create, the lower will be the chances of reaching the API request limit imposed by Spofify. Indeed, every time the software is used, the credentials of a random application are chosen. 
-5) (optional) you can change the variables 'current_day' and 'current_hour' by passing the options -d Day and -h Hour to the module 'playlist_generator' in order to generate a playlist for a different time of the day.
 7) Run the module 'playlist_generator'. Whenever you are prompted a redirect URL, you have to:
   a) paste the URL into a browser
   b) login to the corresponding Spotify account (the email will be printed to stdout before the URL)
   c) after the login, paste the link to the page you have been redirected to back to stdin.
 8) if every step was done correctly, you should be able to see the generated playlist on your Spotify account.
+
+Options:
+-d day: generate playlist for the specified day. The day must be one of the following: "Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"
+-h hour: generate playlist for the specified hour. The hour must be an integer between 0 and 23
+-f extended_listening_history: specify the path to the listening history file given by Spotify

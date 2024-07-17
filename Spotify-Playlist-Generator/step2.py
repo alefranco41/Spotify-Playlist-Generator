@@ -61,11 +61,11 @@ def compute_best_history_patterns(periods, timestamp_key, prefix_name):
     best_history_patterns_file_path = os.path.join(data_directory, prefix_name + best_history_patterns_suffix)
 
     try:
-        with open(best_history_patterns_file_path, "rb") as file:
-            best_history_patterns = pickle.load(file)
-            print(best_history_patterns.keys())
-            print("Retrieved best history patterns")
-            return best_history_patterns
+        if os.path.exists(best_history_patterns_file_path):
+            with open(best_history_patterns_file_path, "rb") as file:
+                best_history_patterns = pickle.load(file)
+                print("Retrieved best history patterns")
+                return best_history_patterns
     except Exception as e:
             print(e)
             pass
@@ -247,9 +247,7 @@ def compute_optimal_solution_indexes(history_patterns, playlist_patterns):
         optimal_solutions_indexes[period] = (vertices_period,duplicate_indexes)
     if not optimal_solutions_indexes:
         print(f"Couldn't run the dynamic programming algorithm for hours {list(playlist_patterns.keys())}")
-        
-        #sys.exit()
-    
+            
     print(f"Computed the optimal ordering of the song-sets produced for hours {list(playlist_patterns.keys())}")
     return optimal_solutions_indexes
 
@@ -311,33 +309,28 @@ def create_playlists_dict(final_playlist, history_patterns, prefix_name, method_
 
     with open("data/playlists.bin", "ab") as file:
         pickle.dump(playlists, file)
-    print("Playlists uplaoded on data/playlists.bin")
+    print("Playlists uploaded on data/playlists.bin")
 
     return playlists
 
 #upload the playlists generated for every period on Spotify
 def create_playlists(playlists):
-    while True:
-        try:
-            spotify = change_credentials()
-        except Exception as e:
-            print(e)
-            pass
-        else:
-            break
-
-    user_id = spotify.current_user()['id']
+    spotify = change_credentials()
+    user_id = spotify.me()['id']
     for playlist_data, tracks in playlists.items():
-        if playlist_data[3] != "our_method":
-            playlist_name = f"{playlist_data[0]}_{playlist_data[1]}_{playlist_data[2]}:00_{playlist_data[3]}"
-            method_name = playlist_data[2]
-        else:
-            playlist_name = f"{playlist_data[0]}_{playlist_data[1]}_{playlist_data[2]}:00"
-            method_name = "our method"
-        playlist = spotify.user_playlist_create(user_id, playlist_name, public=False)
-        spotify.playlist_add_items(playlist['id'], tracks[0])
+        playlist_name = f"{playlist_data[1]} {playlist_data[2]}:00"
         
-        print(f"Uploaded on Spotify the playlist for {playlist_data[1]} at {playlist_data[2]}:00, generated with method {method_name} for the listening history {playlist_data[0]}")
+        while True:
+            try:
+                playlist = spotify.user_playlist_create(user=user_id, name=playlist_name)
+                spotify.playlist_add_items(playlist['id'], tracks[0])
+                break
+            except Exception as e:
+                print(e)
+                spotify = change_credentials()
+
+        
+        print(f"Playlist uploaded on Spotify")
 
 def get_timestamp_key(periods):
     #check if the module 'step1' is running with a "StreamingHistory.json" file provided by the user or not.
