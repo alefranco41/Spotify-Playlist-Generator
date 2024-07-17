@@ -607,11 +607,6 @@ def calculate_stats(results):
 
     return stats, results
 
-# Assuming `results` is the dictionary containing your data
-stats, t_test_results = calculate_stats(retrieve_results2())
-
-
-
 
 def generate_single_listening_history_graphs(results):
     data = []
