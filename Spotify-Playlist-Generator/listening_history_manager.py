@@ -9,6 +9,7 @@ from custom_cache_handler import CustomCacheFileHandler
 import pytz #convert Spotify's time zone to the current one
 import csv
 import json
+import requests
 from tzlocal import get_localzone #get current time zone
 feature_names_to_remove = ["uri", "track_href", "analysis_url", "type", "duration_ms"] #track features not needed for clustering
 feature_names_1 = ['Acousticness','Danceability','Energy','Instrumentalness','Key','Liveness','Loudness','Mode','Speechiness','Tempo','Time_signature','Valence','TrackID']
@@ -32,7 +33,8 @@ def csv_to_dict(csv_file):
                 keys = next(reader)  
                 for row in reader:
                     data.append(dict(zip(keys, row)))
-    except Exception:
+    except Exception as e:
+        print(e)
         data = []
         print(f"An error occurred while trying to load data from file {csv_file}.")
     else:
@@ -76,6 +78,7 @@ def check_features(tracks, feature_names):
 
 #get the track features needed in the dynamic programming algorithm
 def get_features(tracks, spotify):
+    spotify = change_credentials()
     if isinstance(tracks[0], str):
         try:
             with open("data/all_features.bin", "rb") as file:
@@ -89,7 +92,7 @@ def get_features(tracks, spotify):
                         break
             if len(feature_list) == len(tracks):
                 return feature_list
-        except Exception:
+        except Exception as e:
             pass
         
         ids = tracks
@@ -110,9 +113,24 @@ def get_features(tracks, spotify):
        sublists = [ids[i:i+50] for i in range(0, len(ids), 50)]
        features = [] 
        for sublist in sublists:
-           features.extend(spotify.audio_features(tracks=sublist))
+           while True:
+                try:
+                    features.extend(spotify.audio_features(tracks=sublist))
+                except Exception as e:
+                    print(e)
+                    spotify = change_credentials()
+                else:
+                   break
+                
     else:
-        features = spotify.audio_features(tracks=ids)
+        while True:
+            try:
+                features = spotify.audio_features(tracks=ids)
+            except Exception as e:
+                print(e)
+                spotify = change_credentials()
+            else:
+                break
     feature_list = []
     for feature in features:
         if feature:
@@ -121,11 +139,24 @@ def get_features(tracks, spotify):
                 final_features = dict(filter(lambda item: item[0] not in feature_names_to_remove, feature.items()))
                 feature_list.append(final_features)
 
+    
+    try:
+        with open("data/all_features.bin", "rb") as file:
+            all_stored_features = pickle.load(file)
+            all_stored_features.extend(feature_list)
+        
+        with open("data/all_features.bin", "wb") as file:
+            pickle.dump(list(all_stored_features), file)
+
+    except (EOFError, FileNotFoundError):
+        pass
+
     return feature_list
 
 
 def get_tracks(songs, timestamps, spotify):
     sublists = [songs[i:i+50] for i in range(0, len(songs), 50)]
+
     timestamp_sublists = [timestamps[i:i+50] for i in range(0, len(timestamps), 50)]
 
     songs = []
@@ -141,7 +172,8 @@ def get_tracks(songs, timestamps, spotify):
                 
                 songs.extend(tracks)
                 spotify = change_credentials()
-            except Exception:
+            except Exception as e:
+                print(e)
                 spotify = change_credentials()
             else:
                 break
@@ -180,7 +212,11 @@ def compute_recently_played_songs(spotify):
     recently_played_songs = sorted(recently_played_songs['items'], key=lambda x: x['played_at'], reverse=True)
 
     #remove consecutive duplicates and songs that have been played for too little time
-    unique_songs = [recently_played_songs[0]] 
+    if(len(recently_played_songs) > 0):
+        unique_songs = [recently_played_songs[0]]
+    else:
+        unique_songs = []
+
     for i in range(1, len(recently_played_songs)):
         current_song = recently_played_songs[i]
         previous_song = recently_played_songs[i - 1]
@@ -229,7 +265,7 @@ def filter_listening_history_file(csv_data):
                 item['endTime'] = timestamp
                 item['TrackID'] = item['spotify_track_uri'].split(':')[-1]
             valid_items.append(item)
-        except Exception:
+        except Exception as e:
             csv_data.remove(item)
     
     recently_played_songs = sorted(valid_items, key=lambda x: x['endTime'], reverse=True)
@@ -1259,7 +1295,7 @@ credentials_dicts = {
         },
 
         {
-            'client_id':'',
+            'client_id':'dbfb12002c22485883dbdc0966ce4d97',
             'client_secret':'a107ac58d524487aa3aba806cd4477a7',
             'redirect_uri':'https://www.google.com'
         },
@@ -2531,7 +2567,9 @@ def print_in_box(text):
     print(f"| {text} |")
     print(border)
 
+
 def change_credentials():
+    
     while True:
         try:
             random_account, random_account_credentials = random.choice(list(credentials_dicts.items()))
@@ -2547,12 +2585,14 @@ def change_credentials():
             spotify = spotipy.Spotify(auth_manager=SpotifyOAuth(**random_credentials, scope="playlist-modify-private user-read-recently-played", cache_handler=custom_cache_handler))
             prova = spotify.current_user()['id']
         except spotipy.exceptions.SpotifyException as e:
+            print(e)
             if e.http_status == 429:
                 with open("data/errors.txt", "a") as file:
                     retry_after = int(e.headers.get('Retry-After'))
                     file.write(random_credentials['client_id'] + retry_after + "\n")
             continue
-        except spotipy.oauth2.SpotifyOauthError:
+        except (spotipy.oauth2.SpotifyOauthError, TimeoutError, requests.exceptions.ReadTimeout) as e:
+            print(e)
             continue
         else:
             break
@@ -2560,6 +2600,35 @@ def change_credentials():
     return spotify
 
 def update_all_cache_files():
+    credentials_dicts = {
+            'rapsimigna@gufum.com': [
+            {
+                'client_id':'e81b79f4862946c59e2c72bad17235e0',
+                'client_secret':'db0ab8a382da41e0ab5de262c43ef2b1',
+                'redirect_uri':'https://www.google.com'
+            },
+            {
+                'client_id':'8775978c7a3e480a84610112eb91aed8',
+                'client_secret':'e0dc8b2ea59649578d51d813df9e78bf',
+                'redirect_uri':'https://www.google.com'
+            },
+            {
+                'client_id':'e42c742956224ade9b73abf00358a757',
+                'client_secret':'0db478742c9140639ede3528a0bf2b9d',
+                'redirect_uri':'https://www.google.com'
+            },
+            {
+                'client_id':'ca4f5149365e4ab19979760ebbccdb49',
+                'client_secret':'beb150148d4f4bb0b2e1fd0abf3c4738',
+                'redirect_uri':'https://www.google.com'
+            },
+            {
+                'client_id':'0da408eb8c9a4c33a3d3d10f236789ce',
+                'client_secret':'d3c130d21f5b4c2990039bb9a44841b6',
+                'redirect_uri':'https://www.google.com'
+            }
+        ]
+    }
     with open("data/errors.txt", "a") as file:
         for email, apps in credentials_dicts.items():
             for app in apps:
@@ -2571,8 +2640,7 @@ def update_all_cache_files():
                 print_in_box(f"ACCOUNT CLIENT-ID: {app['client_id']}")
                 try:
                     spotify = spotipy.Spotify(auth_manager=SpotifyOAuth(**app, scope="playlist-modify-private user-read-recently-played", cache_handler=custom_cache_handler))
-                    user_id = spotify.search("ligabue")
-                    # Continua la gestione della risposta...
+                    user_id = spotify.current_user()['id']
                 except spotipy.SpotifyException as e:
                     if e.http_status == 429:
                         retry_after = int(e.headers.get('Retry-After'))
@@ -2596,26 +2664,16 @@ def update_all_cache_files():
                     continue
 
 
-def get_recommendations(spotify=change_credentials(), seed_tracks=None, limit=100, kwargs=None):  
-    if kwargs:
-        key = tuple(seed_tracks), tuple(kwargs.items())
-    else:
-        key = tuple(seed_tracks)
-
-    with open("data/stored_recommendations.bin", "rb") as file:
+def get_recommendations(spotify=change_credentials(), seed_tracks=None, limit=100, kwargs=None):
+    while True:
         try:
-            while True:
-                recommendation = pickle.load(file)
-                if recommendation.get(key, None):
-                    print("Retrieved recommentations from local storage")
-                    return recommendation[key]
-        except (EOFError):
-            pass
-    
-    ret = spotify.recommendations(seed_tracks=seed_tracks, limit=limit, kwargs=kwargs)
-    with open("data/stored_recommendations.bin", "ab") as file:
-        recommendations_dict = {key: ret}
-        pickle.dump(recommendations_dict, file)
-    print("Retrieved recommentations from Spotify API")
+            ret = spotify.recommendations(seed_tracks=seed_tracks, limit=limit, kwargs=kwargs)
+        except spotipy.exceptions.SpotifyException:
+            return []
+        except Exception as e:
+            print(e)
+            change_credentials()
+        else:
+            break
 
-    return ret 
+    return ret
