@@ -41,6 +41,8 @@ constraints = {
 
 
 def compute_prefix_name(listening_history_file):
+    if not listening_history_file:
+        return "normal_mode"
     file_name = os.path.basename(listening_history_file)
     file_name_without_extension = os.path.splitext(file_name)[0]
     file_name_without_underscore = file_name_without_extension.replace("_", "")
@@ -49,9 +51,14 @@ def compute_prefix_name(listening_history_file):
 #check if the module 'step1' is running with a "StreamingHistory.json" file provided by the user or not.
 #this check is needed because the structure of the dictionary 'periods' will be different. 
 def check_listening_history_file(periods):
-    if list(periods.values())[0][0].get('endTime', None):
-        return True
-    return False
+    ret = None
+    try:
+        if list(periods.values())[0][0].get('endTime', None):
+            ret = True
+    except IndexError:
+        ret = False
+
+    return ret
 
 
 #dNTNA: number of new tracks by new artists played in a given period
@@ -98,7 +105,7 @@ def compute_dNTNA_dNTKA(current_period, periods, current_period_songs, listening
 
 #dictionary that maps a period to the list of tracks played in that period
 #a period is identified by the day (year/month/day) and the hour in which some tracks in the listening history have been played
-def compute_periods(listening_history_file_data, prefix_name,):
+def compute_periods(listening_history_file_data, prefix_name):
     periods = {}
     periods_file_path = os.path.join(data_directory, prefix_name + periods_suffix)
 
@@ -106,6 +113,7 @@ def compute_periods(listening_history_file_data, prefix_name,):
         with open(periods_file_path, "rb") as file:
             periods = pickle.load(file)
     except Exception as e:
+        print(e)
         pass
     else:
         print(f"Retrieved periods from {periods_file_path}")
@@ -137,7 +145,7 @@ def compute_periods(listening_history_file_data, prefix_name,):
     
     if not periods:
         print("Couldn't retrieve or compute periods")
-        sys.exit()
+        #sys.exit()
     else:
         with open(periods_file_path, "wb") as file:
             pickle.dump(periods, file)
@@ -174,7 +182,8 @@ def compute_listening_history(periods, prefix_name):
     try:
         with open(listening_history_file_path, "rb") as file:
             listening_history = pickle.load(file)
-    except Exception:
+    except Exception as e:
+        print(e)
         pass
     else:
         print(f"Retrieved listening history from {listening_history_file_path}")
@@ -183,27 +192,29 @@ def compute_listening_history(periods, prefix_name):
         print(f"Computing listening history for period #{i+1}/{len(periods)}")
         if isinstance(period, datetime):
             hour = period.hour
-        else:
-            hour = period
-        if not listening_history.get(hour,None):
-            listening_history[hour] = []
+            day = period.strftime("%A")
+
+        if not listening_history.get((day,hour),None):
+            listening_history[(day,hour)] = []
+        
         track_ids = compute_track_ids(period, tracks)
         
         
         while True:
             try:
                 features = get_features(track_ids,spotify)
-            except Exception:
+            except Exception as e:
+                print(e)
                 spotify = change_credentials()
             else:
                 break
 
-        listening_history[hour].extend(features)
+        listening_history[(day,hour)].extend(features)
 
 
     if not listening_history:
         print("Couldn't compute or retrieve the listening history")
-        sys.exit()
+        #sys.exit()
     else:
         with open(listening_history_file_path, "wb") as file:
                 pickle.dump(listening_history, file)
@@ -221,7 +232,8 @@ def compute_listening_habits(periods, prefix_name):
     try:
         with open(listening_habits_file_path, "rb") as file:
             Ph = pickle.load(file)
-    except Exception:
+    except Exception as e:
+        print(e)
         pass
     else:
         print(f"Retrieved listening habits from {listening_habits_file_path}")
@@ -253,13 +265,27 @@ def compute_listening_habits(periods, prefix_name):
 
     if not Ph:
         print("Couldn't compute or retrieve the listening habits")
-        sys.exit()
+        #sys.exit()
     else:
         with open(listening_habits_file_path, "wb") as file:
                 pickle.dump(Ph, file)
         print("Computed listening habits ")
 
     return Ph
+
+def retrieve_most_similar_song_set(prefix_name, day, hour):
+    most_similar_song_sets_file_path = os.path.join(data_directory, prefix_name + most_similar_song_sets_suffix)
+    most_similar_song_sets = {}
+    try:
+        with open(most_similar_song_sets_file_path, "rb") as file:
+            most_similar_song_sets = pickle.load(file)
+    except (FileNotFoundError, EOFError):
+        pass
+    
+    if most_similar_song_sets.get((day,hour), None):
+        return {(day,hour):most_similar_song_sets[(day,hour)]}
+    
+    return None
 
 
 #for each period, return the most similar song set among the four generated
@@ -307,7 +333,7 @@ def compute_most_similar_song_sets(song_sets, periods, listening_habits):
     for period_song_set, Ph_values in Ph.items():
         euclidean_distances = []
         for algorithm_name, (ntna, ntka) in Ph_values.items():
-            euclidean_distance = np.sqrt((ntna - listening_habits[period_song_set][0])**2 + (ntka - listening_habits[period_song_set][1])**2)
+            euclidean_distance = np.sqrt((ntna - listening_habits[period_song_set[1]][0])**2 + (ntka - listening_habits[period_song_set[1]][1])**2)
             euclidean_distances.append((algorithm_name, euclidean_distance))
 
         most_similar[period_song_set] = min(euclidean_distances, key=lambda x: x[1])
@@ -318,7 +344,7 @@ def compute_most_similar_song_sets(song_sets, periods, listening_habits):
     
     if not most_similar_song_set:
         print(f"Couldn't compute most similar song-set for periods {[item[0] for item in list(most_similar.items())]}")
-        sys.exit(2)
+        #sys.exit(2)
     
     print(f"Computed most similar song-set for periods {[item[0] for item in list(most_similar.items())]}")
     return most_similar_song_set
@@ -446,8 +472,8 @@ def compute_clusterings(periods_listening_history):
                 print(f"Couldn't generate {method} clustering for period {period}")
     
     if not clusterings:
-        print(f"Couldn't compute clusterings for hours {list(periods_listening_history.keys())}")
-        sys.exit(2)
+        print(f"Couldn't compute clusterings for periods {list(periods_listening_history.keys())}")
+        #sys.exit(2)
     
     return clusterings
 
@@ -484,7 +510,8 @@ def linear_heuristic(cluster, centroid, m, song_set, spotify):
             while True:
                 try:
                     recommendations = get_recommendations(spotify=spotify, seed_tracks=tracks, limit=100, kwargs=modified_song_data).get('tracks')
-                except Exception:
+                except Exception as e:
+                    print(e)
                     spotify = change_credentials()
                 else:
                     break
@@ -563,7 +590,8 @@ def spheric_heuristic(cluster, centroid, m, song_set, spotify):
         while True:
             try:
                 recommendations = get_recommendations(spotify=spotify, seed_tracks=[nearest_song['id']], limit=100, kwargs=modified_song_data).get('tracks')
-            except Exception:
+            except Exception as e:
+                print(e)
                 spotify = change_credentials()
             else:
                 break
@@ -634,7 +662,8 @@ def upload_most_similar_song_sets(most_similar_song_sets, prefix_name):
     try:
         with open(most_similar_song_sets_file_path, "rb") as file:
             already_stored_song_sets = pickle.load(file)
-    except Exception:
+    except Exception as e:
+        print(e)
         pass
 
     already_stored_song_sets.update(most_similar_song_sets)
