@@ -2580,8 +2580,6 @@ def change_credentials():
             custom_cache_handler = CustomCacheFileHandler(credentials_index=credentials_index_complete)
             print_in_box(f"ACCOUNT EMAIL: {random_account}")
             print_in_box(f"ACCOUNT CLIENT-ID: {random_credentials['client_id']}")
-            with open("cache/credentials.txt", "w") as file:
-                file.write(random_credentials['client_id'])
             spotify = spotipy.Spotify(auth_manager=SpotifyOAuth(**random_credentials, scope="playlist-modify-private user-read-recently-played", cache_handler=custom_cache_handler))
             prova = spotify.current_user()['id']
         except spotipy.exceptions.SpotifyException as e:
