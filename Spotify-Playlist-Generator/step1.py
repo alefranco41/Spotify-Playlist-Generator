@@ -145,9 +145,10 @@ def compute_periods(listening_history_file_data, prefix_name):
     if not periods:
         print("Couldn't retrieve or compute periods")
     else:
-        with open(periods_file_path, "wb") as file:
-            pickle.dump(periods, file)
-        print("Computed periods")
+        if listening_history_file_data:
+            with open(periods_file_path, "wb") as file:
+                pickle.dump(periods, file)
+            print("Computed periods")
     
     return periods
 
@@ -215,9 +216,10 @@ def compute_listening_history(periods, prefix_name):
         print("Couldn't compute or retrieve the listening history")
         #sys.exit()
     else:
-        with open(listening_history_file_path, "wb") as file:
+        if check_listening_history_file(periods):
+            with open(listening_history_file_path, "wb") as file:
                 pickle.dump(listening_history, file)
-        print("Computed listening history ")
+            print("Computed listening history ")
 
     
     return listening_history
@@ -267,9 +269,10 @@ def compute_listening_habits(periods, prefix_name):
         print("Couldn't compute or retrieve the listening habits")
         #sys.exit()
     else:
-        with open(listening_habits_file_path, "wb") as file:
+        if check_listening_history_file(periods):
+            with open(listening_habits_file_path, "wb") as file:
                 pickle.dump(Ph, file)
-        print("Computed listening habits ")
+            print("Computed listening habits ")
 
     return Ph
 
